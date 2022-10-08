@@ -94,7 +94,7 @@ pub fn rectangle_circle_collide(c_pos: Vec3, c_size: Vec2, r_pos: Vec3, r_size: 
     if dist.x.pow(2) + dist.y.pow(2) <= size.x.pow(2)
     {
         let (x_collision, x_depth) = {
-            if a_min.x < r_min.x && c_max.x > r_min.x && c_max.x < r_max.x
+            if c_min.x < r_min.x && c_max.x > r_min.x && c_max.x < r_max.x
             {
                 (Collision::Left, r_min.x - c_max.x)
             }
