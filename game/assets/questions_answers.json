@@ -1,0 +1,102 @@
+{
+    "questionAnswerPair":[
+       {
+            "id": 1,
+            "question": "Who are you?",
+            "answer": "I am Rover, loyal companion and longtime resident of this computer!",
+            "vector": [0, 0, 0],
+            "priority": 1
+       },
+       {
+            "id": 2,
+            "question": "Where am I?",
+            "answer": "You're in a computer, of course.",
+            "vector": [0, 0, 0],
+            "priority": 1
+       },
+       {
+            "id": 3,
+            "question": "How do I get out of here?",
+            "answer": "Hmm...the last person to get stuck here mailed themselves out...",
+            "vector": [0, 0, 0],
+            "priority": 1
+        },
+        {
+            "id": 4,
+            "question": "Help?",
+            "answer": "Have you checked out the folders on this computer? My user spends a lot of time in music and photos.",
+            "vector": [0, 0, 0],
+            "priority": 2
+        },
+        {
+            "id": 5,
+            "question": "Help?",
+            "answer": "Have you checked out the folders on this computer? My user plays some game in the games folder all the time...I forget the name...Why don't you check it out?",
+            "vector": [0, 0, 0],
+            "priority": 1
+        },
+        {
+            "id": 6,
+            "question": "Help?",
+            "answer": "If you've checked out all the files on this computer, why don't you give email a look?",
+            "vector": [0, 0, 0],
+            "priority": 3
+        },
+        {
+            "id": 7,
+            "question": "How do I reach the files?",
+            "answer": "Well, I jump, but I'm a dog. Maybe you could get some practice playing the games on this computer.",
+            "vector": [0, 0, 0],
+            "priority": 1
+        },
+        {
+            "id": 8,
+            "question": "Why is the music folder important?",
+            "answer": "There's this one artist my user's been listening to a lot lately...I can't remember their name...",
+            "vector": [0, 0, 0],
+            "priority": 2
+        },
+        {
+            "id": 9,
+            "question": "Why is the pictures folder important?",
+            "answer": "If only my user loved me as much as my user loves their real dog...",
+            "vector": [0, 0, 0],
+            "priority": 2
+        },
+        {
+            "id": 10,
+            "question": "Why is the writings folder important?",
+            "answer": "My user's been spending a lot of time trying to solve puzzles lately. Spotted lanternfly? Ant? Ladybug? Oh, woof it! I can't remember the name. There's some number at the end too...",
+            "vector": [0, 0, 0],
+            "priority": 2
+        },
+        {
+            "id": 11,
+            "question": "Why am I locked out of email?",
+            "answer": "Have you been guessing random passwords?! I'll give you a hint: it's not abc123. Why don't you spend time collecting information about my user?",
+            "vector": [0, 0, 0],
+            "priority": 1
+        },
+        {
+            "id": 12,
+            "question": "Is swift the password?",
+            "answer": "You're on the right track! Enter your guess into the email login (but be careful you only have 3 tries before a lockout), or keep exploring.",
+            "vector": [0, 0, 0],
+            "priority": 2
+        },
+        {
+            "id": 13,
+            "question": "Is fido the password?",
+            "answer": "You're on the right track! Enter your guess into the email login (but be careful you only have 3 tries before a lockout), or keep exploring.",
+            "vector": [0, 0, 0],
+            "priority": 2
+        },
+        {
+            "id": 14,
+            "question": "Is 3301 the password?",
+            "answer": "You're on the right track! Enter your guess into the email login (but be careful you only have 3 tries before a lockout), or keep exploring.",
+            "vector": [0, 0, 0],
+            "priority": 1
+        }
+    ]
+ }
