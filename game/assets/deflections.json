@@ -1,0 +1,22 @@
+{
+    "deflection":[
+       {
+            "id": 1,
+            "answer": "*Yawn* I don't know about that one...try me again after my nap.",
+            "vector": [0, 0, 0],
+            "priority": 1
+       },
+       {
+            "id": 2,
+            "answer": "I think you can figure that one out yourself.",
+            "vector": [0, 0, 0],
+            "priority": 1
+       },
+       {
+            "id": 3,
+            "answer": "If I told you that this would be too easy.",
+            "vector": [0, 0, 0],
+            "priority": 1
+        }
+    ]
+ }
