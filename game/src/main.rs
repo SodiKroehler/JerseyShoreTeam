@@ -5,6 +5,7 @@ use bevy::{
 
 #[derive(Component, Deref, DerefMut)]
 struct CreditTimer(Timer);
+
 #[derive(Component)]
 struct Player{
 	x_pos: i32,
@@ -14,6 +15,8 @@ struct Player{
 	grav: f32,
 	jump_speed: f32,
 }
+
+
 
 fn main() {
 	App::new()
@@ -108,4 +111,6 @@ fn roll_credits(
 			info!("Moved to next");
 		}
 	}
+		.add_system(roll_credits)
+
 }
