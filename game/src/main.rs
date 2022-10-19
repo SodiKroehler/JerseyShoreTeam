@@ -111,6 +111,5 @@ fn roll_credits(
 			info!("Moved to next");
 		}
 	}
-		.add_system(roll_credits)
 
 }
