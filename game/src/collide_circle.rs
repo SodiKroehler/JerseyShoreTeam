@@ -1,6 +1,6 @@
 //! Utilities for detecting if and on which side two axis-aligned bounding boxes (AABB) collide.
-
-use bevy_math::{Vec2, Vec3};
+use bevy::math::Vec2; 
+use bevy::math::Vec3;
 
 #[derive(Debug)]
 pub enum Collision {
@@ -14,20 +14,20 @@ pub enum Collision {
 pub fn circle_collide(a_pos: Vec3, a_size: Vec2, b_pos: Vec3, b_size: Vec2) ->  Option<Collision>
 {
     let distance = a_pos.truncate() - b_pos.truncate();
-    let size = a_size.x + b_size.x;
-    let a_max = a_pos + a_size;
-    let a_min = a_pos - a_size;
-    let b_max = b_pos + b_size;
-    let b_min = b_pos - b_size;
+    let size = a_size + b_size;
+    let a_max = a_pos.truncate() + a_size;
+    let a_min = a_pos.truncate() - a_size;
+    let b_max = b_pos.truncate() + b_size;
+    let b_min = b_pos.truncate() - b_size;
     
     if distance.x.abs() <= size.x && distance.y.abs() <= size.y
     {
         let (x_collision, x_depth) = {
-            if distance.x < 0 && a_max.x > b_min.x && a_max.x < b_max.x //left side collision
+            if distance.x < 0.0 && a_max.x > b_min.x && a_max.x < b_max.x //left side collision
             {
                 (Collision::Left, b_min.x - a_max.x)
             }
-            else if distance > 0 && a_min.x < b_max.x && a_max.x > b_max.x
+            else if distance.x > 0.0 && a_min.x < b_max.x && a_max.x > b_max.x
             {
                 (Collision::Right, a_min.x - b_min.x)
             }
@@ -35,14 +35,14 @@ pub fn circle_collide(a_pos: Vec3, a_size: Vec2, b_pos: Vec3, b_size: Vec2) ->  
             {  
                 (Collision::Inside, -f32::INFINITY)
             }
-        }
+        };
 
         let (y_collision, y_depth) = {
-            if distance.y < 0 && a_max.y > b_min.y && a_max.y < b_max.y
+            if distance.y < 0.0 && a_max.y > b_min.y && a_max.y < b_max.y
             {
                 (Collision::Bottom, b_min.y - a_max.y)
             }
-            else if distance.y > 0 && a_min.y < b_max.y && a_max.y > b_max.y
+            else if distance.y > 0.0 && a_min.y < b_max.y && a_max.y > b_max.y
             {
                 (Collision::Top, a_min.y - b_max.y)
             }
@@ -50,48 +50,48 @@ pub fn circle_collide(a_pos: Vec3, a_size: Vec2, b_pos: Vec3, b_size: Vec2) ->  
             {
                 (Collision::Inside, -f32::INFINITY)
             }
-        }
+        };
 
         if y_depth.abs() < x_depth.abs()
         {
-            Some(y_collision)
+            return Some(y_collision);
         }
         else
         {
-            Some(x_collision)
+            return Some(x_collision);
         }
     }
-    None
+    return None;
 }
 
 //adapted from http://jeffreythompson.org/collision-detection/circle-rect.php
 pub fn rectangle_circle_collide(c_pos: Vec3, c_size: Vec2, r_pos: Vec3, r_size: Vec2) -> Option<Collision> {
-    let c_max = c_pos + c_size;
-    let c_min = c_pos - c_size;
+    let c_max = c_pos.truncate() + c_size;
+    let c_min = c_pos.truncate() - c_size;
     let r_max = r_pos.truncate() + r_size / 2.0;
     let r_min = r_pos.truncate() - r_size / 2.0;
 
     let close: Vec2 = {   //find the closest rectangle edge
         if c_min.x < r_min.x && c_max.y < r_max.y   //top left
         {
-            (r_min.x, r_max.y)
+            Vec2{x:r_min.x, y:r_max.y}
         }
         else if c_min.x < r_min.x && c_max.y > r_min.y  //bottom left
         {
-            (r_min.x, r_min.y)
+            Vec2{x:r_min.x, y:r_min.y}
         }
         else if c_min.x > r_max.x && c_max.y < r_max.y   //top right
         {
-            (r_max.x, r_max.y)
+            Vec2{x:r_max.x, y:r_max.y}
         }
-        else if c_min.x > r_max.x && c_max.y > r_min.y  //bottom right
+        else //if c_min.x > r_max.x && c_max.y > r_min.y  //bottom right
         {
-            (r_max.x, r_min.y)
+            Vec2{x:r_max.x, y:r_min.y}
         }
-    }
+    };
 
-    let dist: Vec2 = (c_pos.x - close.x, c_pos.y - close.y);
-    if dist.x.pow(2) + dist.y.pow(2) <= size.x.pow(2)
+    let dist = Vec2{x:c_pos.x - close.x, y:c_pos.y - close.y};
+    if dist.x.powi(2) + dist.y.powi(2) <= c_size.x.powi(2)
     {
         let (x_collision, x_depth) = {
             if c_min.x < r_min.x && c_max.x > r_min.x && c_max.x < r_max.x
@@ -106,7 +106,7 @@ pub fn rectangle_circle_collide(c_pos: Vec3, c_size: Vec2, r_pos: Vec3, r_size: 
             {
                 (Collision::Inside, -f32::INFINITY)
             }
-        }
+        };
 
         // check to see if we hit on the top or bottom side
         let (y_collision, y_depth) = {
@@ -122,19 +122,19 @@ pub fn rectangle_circle_collide(c_pos: Vec3, c_size: Vec2, r_pos: Vec3, r_size: 
             {
                 (Collision::Inside, -f32::INFINITY)
             }
-        }
+        };
 
         // if we had an "x" and a "y" collision, pick the "primary" side using penetration depth
         if y_depth.abs() < x_depth.abs()
         {
-            Some(y_collision)
+            return Some(y_collision);
         }
         else
         {
-            Some(x_collision)
+            return Some(x_collision);
         }
     }
-    None
+    return None;
 }
 
 // TODO: ideally we can remove this once bevy gets a physics system
