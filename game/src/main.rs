@@ -7,6 +7,9 @@ use bevy::math::Vec3;
 use bevy::asset::LoadState;
 mod collide_circle;
 use collide_circle::Collision;
+mod collidenew;
+use collidenew::Shape;
+use collidenew::CollisionInfo;
 
 #[derive(Component, Deref, DerefMut)]
 struct CreditTimer(Timer);
@@ -62,14 +65,12 @@ fn setup(mut commands: Commands,
 		})
         .insert(CreditTimer(Timer::from_seconds(5., true)));
 	*/
+	let handy:Handle<Image> = asset_server.load("folder.png");
+
 	commands.spawn().insert_bundle(SpriteBundle{
-		texture: asset_server.load("folder.png"),
+		texture: handy,
 		..default()
 	});
-	/*commands.spawn().insert_bundle(SpriteBundle{
-		texture: asset_server.load("windows_xd.png"),
-		..default()
-	});*/
 	commands.spawn()
 		.insert_bundle(SpriteBundle{
 		texture: asset_server.load("player_standin.png"),//30x50
@@ -119,7 +120,7 @@ fn spawn_folder(
 		for ev in ev_spawnfolder.iter(){
 			commands.spawn()
 				.insert_bundle(SpriteBundle{
-				texture: asset_server.get_handle("folder.png"),
+				texture: asset_server.load("folder.png"),
 				transform: Transform::from_translation(ev.0),
 				..default()
 				}).insert(Folder{
