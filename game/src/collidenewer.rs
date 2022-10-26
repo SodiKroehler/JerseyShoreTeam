@@ -1,36 +1,97 @@
 use bevy::ecs::component::Component;
 use bevy::math::{Vec2, Vec3};
-#[derive(Component)]
 pub struct Shape {
     pub vertices: Vec<Vec3>,
     pub origin: Vec3,
+    pub radius: f32,
 } //vertices that will define the polygon
 
 pub struct CollisionInfo {
-    pub shape_a: Shape,
-    pub shape_b: Shape,
-    pub distance: f32,
-    pub vector: Vec2,
-    pub contain_a: bool,
-    pub contain_b: bool,
-    pub seperation: Vec2,
+    shape_a: RB,
+    shape_b: RB,
+    distance: f32, //distance of origins on shortest path
+    vector: Vec2,  //direction to move it
+    contain_a: bool,
+    contain_b: bool,
+    seperation: Vec2, //contains the direction and distance to push the thing outside
 }
 
 #[derive(Component)]
-struct RB {
-    pos_x: f32,
-    pos_y: f32,
+pub struct RB {
+    position: Vec3,
 
     velocity: Vec2,
     acceleration: Vec2,
+    inertia: f32,
 
-    rotation: f32,
-    torque: f32,
+    angle: f32,
+    angular_velocity: f32,
+
+    force: Vec2,
+    torque: Vec2,
 
     mass: f32,
     restitution: f32,
+    area: f32,
+
+    collider: Shape,
+    is_circle: bool,
 
     is_static: bool,
+    temp_static: bool,
+}
+
+impl RB {
+    fn new(position: Vec3, mass: f32, restitution: f32, collider: Shape, is_static: bool) -> RB {
+        let mut area: f32 = 0.0;
+        let is_circle = collider.vertices.len() == 0;
+        if !is_circle {
+            let length: f32 = collider.vertices[0].distance(collider.vertices[1]).abs(); //taking pretty big assuptions of regularity
+            let sides: usize = collider.vertices.len();
+            area = shape_area_approximation(sides, length);
+        } else {
+            //is a circle
+            area = std::f32::consts::PI * collider.radius * collider.radius;
+        }
+        RB {
+            position: position,
+
+            velocity: Vec2 { x: 0.0, y: 0.0 },
+            acceleration: Vec2 { x: 0.0, y: 0.0 },
+            inertia: calc_inertia(&collider, &mass),
+
+            angle: 0.0,
+            angular_velocity: 0.0,
+
+            force: Vec2 { x: 0.0, y: 0.0 },
+            torque: Vec2 { x: 0.0, y: 0.0 },
+
+            mass: mass,
+            restitution: restitution,
+            area: area,
+
+            collider: collider,
+            is_circle: is_circle,
+
+            is_static: is_static,
+            temp_static: true,
+        }
+    }
+}
+
+impl CollisionInfo {
+    fn new(rb_a: RB, rb_b: RB) -> CollisionInfo {
+        CollisionInfo {
+            //setup stuff for resolution
+            shape_a: rb_a,
+            shape_b: rb_b,
+            distance: 0.0,
+            vector: Vec2 { x: 0.0, y: 0.0 },
+            contain_a: true,
+            contain_b: true,
+            seperation: Vec2 { x: 0.0, y: 0.0 },
+        }
+    }
 }
 
 pub(crate) trait RegularPolygon {
@@ -54,13 +115,38 @@ impl RegularPolygon for Shape {
         Shape {
             vertices: vertices,
             origin: origin,
+            radius: radius,
         }
     }
 }
 
+//https://en.wikipedia.org/wiki/List_of_moments_of_inertia
+fn calc_inertia(shape: &Shape, mass: &f32) -> f32 {
+    if shape.vertices.len() == 0 {
+        return mass * shape.radius * shape.radius;
+    }
+    let mut denominator: f32 = 0.0;
+    let mut numerator = 0.0;
+
+    for n in 1..shape.vertices.len() {
+        let p1: Vec2 = shape.vertices[n - 1].truncate();
+        let p2: Vec2 = shape.vertices[n].truncate();
+        let mag = (p1 * p2).length();
+        denominator += mag;
+        numerator += mag * ((p1.dot(p1)) + (p1.dot(p2)) + (p2.dot(p2)));
+    }
+    mass * (numerator / (6.0 * denominator))
+}
+
+fn shape_area_approximation(sides: usize, length: f32) -> f32 {
+    //dont care how this works for
+    (length * length * (sides as f32))
+        / (4.0 * ((180.0 / (sides as f32)) * std::f32::consts::PI / 180.0).tan())
+}
+
 pub fn rotate(shape: &mut Shape, angle: f32) -> &mut Shape {
     for mut vert in shape.vertices.iter_mut() {
-        //*vert -= shape.origin;
+        *vert -= shape.origin;
         let mut temp_vert: Vec2 = vert.truncate();
         temp_vert = Vec2::from_angle(angle).rotate(temp_vert);
         *vert = Vec3 {
@@ -68,7 +154,7 @@ pub fn rotate(shape: &mut Shape, angle: f32) -> &mut Shape {
             y: temp_vert.y,
             z: vert.z,
         };
-        //*vert += shape.origin;
+        *vert += shape.origin;
     }
     return shape;
 }
@@ -83,33 +169,18 @@ pub fn move_shape(shape: &mut Shape, direction: Vec3) -> &mut Shape {
     return shape;
 }
 
-pub fn sat(shape_a: &Shape, shape_b: &Shape) -> Option<CollisionInfo> {
-    let a_vertices: Vec<Vec3> = shape_a.vertices.to_vec();
-    let b_vertices: Vec<Vec3> = shape_b.vertices.to_vec();
-    let a_pos: Vec3 = shape_a.origin;
-    let b_pos: Vec3 = shape_b.origin;
-    //println!("{}", a_pos);
+pub fn sat_polygon_polygon(shape_a: RB, shape_b: RB) -> Option<CollisionInfo> {
+    let a_vertices: Vec<Vec3> = shape_a.collider.vertices.to_vec();
+    let b_vertices: Vec<Vec3> = shape_b.collider.vertices.to_vec();
+    let a_pos: Vec3 = shape_a.position;
+    let b_pos: Vec3 = shape_b.position;
+    println!("{}", a_pos);
     let mut axes: Vec<Vec2> = vec![Default::default(); 0]; //perpindicular axes to project onto
     let mut poly_a = Vec::<Vec2>::with_capacity(6);
     let mut poly_b = Vec::<Vec2>::with_capacity(6);
     let mut shortest: f32 = f32::MAX;
 
-    let mut col = CollisionInfo {
-        //setup stuff for resolution
-        shape_a: Shape{
-        	vertices: shape_a.vertices.clone(),
-        	origin: shape_a.origin,
-        },
-        shape_b: Shape{
-        	vertices: shape_b.vertices.clone(),
-        	origin: shape_b.origin,
-        },
-        distance: 0.0,
-        vector: Vec2 { x: 0.0, y: 0.0 },
-        contain_a: true,
-        contain_b: true,
-        seperation: Vec2 { x: 0.0, y: 0.0 },
-    };
+    let mut col: CollisionInfo = CollisionInfo::new(shape_a, shape_b);
 
     for a in a_vertices.iter() {
         //remove z axis for calculations
@@ -220,3 +291,13 @@ pub fn check_range(range_a: (f32, f32), range_b: (f32, f32), invert: bool) -> (b
 
     (contain_a, contain_b)
 }
+
+pub fn resolve(info: &mut CollisionInfo, dt: bevy::utils::Duration) {
+    //calc torque and force. kinda be lookin like newtons second if you know what i mean yuh yuh yuh yuh google picture of newtowns second law and come back to me B) yup thats right its fucking sweet right?
+    let mut rb_a: &RB = &info.shape_a;
+    let mut rb_b: &RB = &info.shape_b;
+
+    info.vector;
+}
+
+pub fn add_forces(rb: RB) {}
