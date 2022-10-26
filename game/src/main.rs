@@ -33,6 +33,10 @@ struct Physics{
 struct Recycle{}
 static SCREEN_WIDTH:f32 = 1280.0;
 static SCREEN_HEIGHT:f32 = 720.0;
+
+mod rover;
+use rover::RoverPlugin;
+
 fn main() {
 	App::new()
 		.insert_resource(WindowDescriptor {
@@ -44,6 +48,7 @@ fn main() {
 		})
 		.add_plugins(DefaultPlugins)
 		.add_startup_system(setup)
+		.add_plugin(RoverPlugin)
 		.add_event::<FolderSpawnEvent>()
 		//.add_system(roll_credits)
 		.add_system(move_everything)
