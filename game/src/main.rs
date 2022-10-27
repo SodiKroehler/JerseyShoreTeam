@@ -71,15 +71,16 @@ fn setup(mut commands: Commands,
 		})
         .insert(CreditTimer(Timer::from_seconds(5., true)));
 	*/
-	let handy:Handle<Image> = asset_server.load("folder3.png");
+	let handy:Handle<Image> = asset_server.load("windows_xd.png");
 	commands.spawn().insert_bundle(SpriteBundle{
 		texture: handy,
+		transform: Transform::from_xyz(0.0,0.0,0.0),
 		..default()
 	});
 	commands.spawn()//note: shape vertices start at up-left most vertex and rotate clockwise, angle is math-based (0 at +x)
 		.insert_bundle(SpriteBundle{
 		texture: asset_server.load("player_standin.png"),//30x50
-		transform: Transform::from_xyz(0.0,0.0,0.0),
+		transform: Transform::from_xyz(0.0,0.0,1.0),
 		..default()
 		}).insert(Player{
 		})
@@ -94,13 +95,13 @@ fn setup(mut commands: Commands,
 			gravity:1.0,
 		}).insert(Shape{
 			vertices: vec![Vec3::new(-15.0,25.0,0.0),Vec3::new(15.0,25.0,0.0),Vec3::new(15.0,-25.0,0.0),Vec3::new(-15.0,-25.0,0.0)],
-			origin: Vec3::new(0.0,0.0,0.0),//needs to be same as starting transform
+			origin: Vec3::new(0.0,0.0,1.0),//needs to be same as starting transform
 		});
 	
 	commands.spawn()
 		.insert_bundle(SpriteBundle{
 		texture: asset_server.load("recycle_bin1.png"),
-		transform: Transform::from_xyz(50.0,-290.0,0.0),
+		transform: Transform::from_xyz(50.0,-290.0,1.0),
 		..default()
 		}).insert(Size{
 			size: Vec2{
@@ -116,7 +117,7 @@ fn setup(mut commands: Commands,
 			gravity:1.0,
 		}).insert(Shape{
 			vertices: vec![Vec3::new(-18.5,21.5,0.0),Vec3::new(18.5,21.5,0.0),Vec3::new(15.5,-21.5,0.0),Vec3::new(-15.5,-21.5,0.0)],
-			origin: Vec3::new(50.0,-290.0,0.0),//needs to be same as starting transform
+			origin: Vec3::new(50.0,-290.0,1.0),//needs to be same as starting transform
 		});
 
 }
@@ -130,7 +131,7 @@ fn spawn_folder(
 	let c = entity_cap.iter().count();
 	if c <= 4{
 		for ev in ev_spawnfolder.iter(){
-			//info!("x:{} y:{}",ev.0.x,ev.0.y);
+			//info!("x:{} y:{} z:{}",ev.0.x,ev.0.y,ev.0.z);
 			commands.spawn()
 				.insert_bundle(SpriteBundle{
 				texture: asset_server.load("folder3.png"),
@@ -160,7 +161,7 @@ fn inbounds(trans : Vec3, size : Vec2,)->Vec3{
 	return Vec3{
 		x : trans.x.clamp(((-1.0*SCREEN_WIDTH)/2.0)+(size.x/2.0),((1.0*SCREEN_WIDTH)/2.0)-(size.x/2.0)),
 		y : trans.y.clamp(((-1.0*SCREEN_HEIGHT)/2.0)+(size.y/2.0),((1.0*SCREEN_HEIGHT)/2.0)-(size.y/2.0)),
-		z : 0.0
+		z : trans.z
 	};
 }
 fn run_collisions3(//first object is colliding into second
@@ -170,10 +171,11 @@ fn run_collisions3(//first object is colliding into second
 ){
 	let mut obj_pairs = obj_list.iter_combinations_mut();
 	while let Some([(object1, mut transform1, mut phys1, mut shape1, player1, recycle1, folder1), (object2, mut transform2, mut phys2, mut shape2, player2, recycle2, folder2)]) = obj_pairs.fetch_next(){
-		if let Some(folder1) = folder1{
+		//info!("test");
+		if let Some(_) = folder1{
 			info!("folder 1");
 		}
-		if let Some(folder2) = folder2{
+		if let Some(_) = folder2{
 			info!("folder 2");
 		}
 		let translation1 = &mut transform1.translation;
@@ -355,8 +357,8 @@ fn move_everything(
 		//accelerate in horizontal
 		phys.delta_y -= GRAV * phys.gravity;
 		if let Some(player)=player{
-			//info!("player trans x:{} y:{}",translation.x,translation.y);
-			//info!("player shape x:{} y:{}",shape.origin.x,shape.origin.y);
+			//info!("player trans x:{} y:{} z:{}",translation.x,translation.y,translation.z);
+			//info!("player shape x:{} y:{} z:{}",shape.origin.x,shape.origin.y,shape.origin.z);
 			//info!("y vel:{}",phys.delta_y);
 			let mut jumping = 0.0;
 			if keyboard_input.pressed(KeyCode::Left){
@@ -377,9 +379,9 @@ fn move_everything(
 			}
 		}
 		else{
-			if let Some(recycle) = recycle{
-				//info!("recy trans x:{} y:{}",translation.x,translation.y);
-				//info!("folder shape x:{} y:{}",shape.origin.x,shape.origin.y);
+			if let Some(folder) = folder{
+				//info!("recy trans x:{} y:{} z:{}",translation.x,translation.y,translation.z);
+				//info!("folder shape x:{} y:{} z:{}",shape.origin.x,shape.origin.y,shape.origin.z);
 				//info!("what");
 			}
 			if translation.y <= (-1.0*SCREEN_HEIGHT/2.0) +(object.size.y/2.0){
