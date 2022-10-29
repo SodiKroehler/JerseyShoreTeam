@@ -19,9 +19,13 @@ struct Size{
 }
 struct FolderSpawnEvent(Vec3);//holds the position vector of the spawner
 #[derive(Component)]
-struct Player{}
+struct Player{
+	is_grounded: bool,
+}
 #[derive(Component)]
 struct Folder{}
+#[derive(Component)]
+struct RigidFolder{}
 #[derive(Component)]
 struct Physics{
 	delta_x: f32,
@@ -53,7 +57,8 @@ fn main() {
 		//.add_system(roll_credits)
 		.add_system(move_everything)
 		.add_system(run_collisions3)
-		.add_system(run_collisions)
+		//.add_system(run_collisions)
+		.add_system(grounded_folder)
 		.add_system(spawn_folder)
 		.run();
 }
@@ -83,6 +88,7 @@ fn setup(mut commands: Commands,
 		transform: Transform::from_xyz(0.0,0.0,1.0),
 		..default()
 		}).insert(Player{
+			is_grounded:false,
 		})
 		.insert(Size{
 			size: Vec2{
@@ -101,7 +107,7 @@ fn setup(mut commands: Commands,
 	commands.spawn()
 		.insert_bundle(SpriteBundle{
 		texture: asset_server.load("recycle_bin1.png"),
-		transform: Transform::from_xyz(50.0,-290.0,1.0),
+		transform: Transform::from_xyz(-590.0,320.0,1.0),
 		..default()
 		}).insert(Size{
 			size: Vec2{
@@ -114,10 +120,58 @@ fn setup(mut commands: Commands,
 		.insert(Physics{
 			delta_x:0.0,
 			delta_y:0.0,
-			gravity:1.0,
+			gravity:0.0,
 		}).insert(Shape{
 			vertices: vec![Vec3::new(-18.5,21.5,0.0),Vec3::new(18.5,21.5,0.0),Vec3::new(15.5,-21.5,0.0),Vec3::new(-15.5,-21.5,0.0)],
-			origin: Vec3::new(50.0,-290.0,1.0),//needs to be same as starting transform
+			origin: Vec3::new(-590.0,320.0,1.0),//needs to be same as starting transform
+		});
+	commands.spawn()
+		.insert_bundle(SpriteBundle{
+		texture: asset_server.load("folder_red.png"),
+		transform: Transform::from_xyz(-350.0,140.0,1.0),
+		..default()
+		}).insert(RigidFolder{
+		}).insert(Size{
+			size: Vec2{
+				x:37.0,
+				y:32.0,
+			}
+		});
+	commands.spawn()
+		.insert_bundle(SpriteBundle{
+		texture: asset_server.load("folder_red.png"),
+		transform: Transform::from_xyz(-150.0,40.0,1.0),
+		..default()
+		}).insert(RigidFolder{
+		}).insert(Size{
+			size: Vec2{
+				x:37.0,
+				y:32.0,
+			}
+		});
+	commands.spawn()
+		.insert_bundle(SpriteBundle{
+		texture: asset_server.load("folder_red.png"),
+		transform: Transform::from_xyz(50.0,-60.0,1.0),
+		..default()
+		}).insert(RigidFolder{
+		}).insert(Size{
+			size: Vec2{
+				x:37.0,
+				y:32.0,
+			}
+		});
+	commands.spawn()
+		.insert_bundle(SpriteBundle{
+		texture: asset_server.load("folder_red.png"),
+		transform: Transform::from_xyz(200.0,-160.0,1.0),
+		..default()
+		}).insert(RigidFolder{
+		}).insert(Size{
+			size: Vec2{
+				x:37.0,
+				y:32.0,
+			}
 		});
 
 }
@@ -134,7 +188,7 @@ fn spawn_folder(
 			//info!("x:{} y:{} z:{}",ev.0.x,ev.0.y,ev.0.z);
 			commands.spawn()
 				.insert_bundle(SpriteBundle{
-				texture: asset_server.load("folder3.png"),
+				texture: asset_server.load("folder.png"),
 				transform: Transform::from_translation(ev.0),
 				..default()
 				}).insert(Folder{
@@ -172,12 +226,6 @@ fn run_collisions3(//first object is colliding into second
 	let mut obj_pairs = obj_list.iter_combinations_mut();
 	while let Some([(object1, mut transform1, mut phys1, mut shape1, player1, recycle1, folder1), (object2, mut transform2, mut phys2, mut shape2, player2, recycle2, folder2)]) = obj_pairs.fetch_next(){
 		//info!("test");
-		if let Some(_) = folder1{
-			info!("folder 1");
-		}
-		if let Some(_) = folder2{
-			info!("folder 2");
-		}
 		let translation1 = &mut transform1.translation;
 		let translation2 = &mut transform2.translation;
 		let size1 = object1.size;
@@ -197,12 +245,22 @@ fn run_collisions3(//first object is colliding into second
 		if c.is_some(){//if collision
 			if let Some(player1) = player1{
 				if let Some(recycle2) = recycle2{
-					ev_spawnfolder.send(FolderSpawnEvent(*translation2));
+					if phys2.gravity==0.0{
+						phys2.gravity=1.0;
+					}
+					else{
+						ev_spawnfolder.send(FolderSpawnEvent(*translation2));
+					}
 				}
 			}
 			if let Some(recycle1) = recycle1{
 				if let Some(player2) = player2{
-					ev_spawnfolder.send(FolderSpawnEvent(*translation2));
+					if phys1.gravity==0.0{
+						phys1.gravity=1.0;
+					}
+					else{
+						ev_spawnfolder.send(FolderSpawnEvent(*translation1));
+					}
 				}
 			}
 			
@@ -218,8 +276,8 @@ fn run_collisions3(//first object is colliding into second
 			phys1.delta_y+=norm_c.y*LAUNCH;
 			phys2.delta_x-=norm_c.x*LAUNCH;
 			phys2.delta_y-=norm_c.y*LAUNCH;
-			if phys1.delta_x.abs() < CUTOFF{
-			phys1.delta_x = 0.0;
+			/*if phys1.delta_x.abs() < CUTOFF{
+				phys1.delta_x = 0.0;
 			}
 			if phys2.delta_x.abs() < CUTOFF{
 				phys2.delta_x = 0.0;
@@ -231,7 +289,7 @@ fn run_collisions3(//first object is colliding into second
 			if phys2.delta_y.abs() < CUTOFF{
 				phys2.delta_y = 0.0;
 				phys2.gravity = 0.0;
-			}
+			}*/
 			phys1.delta_x *= RESTITUTION;
 			phys2.delta_x *= RESTITUTION;
 			phys1.delta_y *= RESTITUTION;
@@ -258,15 +316,51 @@ fn run_collisions3(//first object is colliding into second
 			
 			return;
 		}
-		else{
+		/*else{
 			//info!("no collide");
 			phys1.gravity = 1.0;
 			phys2.gravity = 1.0;
 			return;
-		}
+		}*/
 	}		
 }
 
+fn grounded_folder(//first object is colliding into second
+	time: Res<Time>,
+	mut ev_spawnfolder : EventWriter<FolderSpawnEvent>,
+	mut obj_list: Query<(Entity, &Size, &mut Transform, Option<&mut Physics>, Option<&mut Player>,  Option<&RigidFolder>)>,
+){
+	let mut obj_pairs = obj_list.iter_combinations_mut();
+	while let Some([(e1, object1, mut transform1, mut phys1, mut player1, folder1), (e2, object2, mut transform2, mut phys2, mut player2, folder2)]) = obj_pairs.fetch_next(){
+		if let Some(mut player1) = player1{
+			if let Some(folder2) = folder2{
+				let phys = phys1.as_mut().unwrap();
+				let mut ground_check = player1.as_mut();
+				let translation1 = &mut transform1.translation;
+				let translation2 = &mut transform2.translation;
+				let size1 = object1.size;
+				let size2 = object2.size;
+				let c = collide_circle::collide(*translation1,size1,*translation2,size2);
+				if c.is_some(){
+					//info!("collide");
+					match c{
+						Some(Collision::Left)=>{phys.delta_x=0.0;},
+						Some(Collision::Right)=>{phys.delta_x=0.0;},
+						Some(Collision::Top)=>{phys.delta_y=0.0;phys.gravity=0.0;ground_check.is_grounded=true;},
+						Some(Collision::Bottom)=>{phys.delta_y=0.0;},
+						Some(Collision::Inside)=>{phys.delta_x=0.0;},
+						None=>(),
+					}
+					*translation1 = inbounds(*translation1, object1.size);
+				}
+				else{
+					//info!("no collide");
+					phys.gravity = 1.0;
+				}
+			}
+		}
+	}
+}
 fn run_collisions(//first object is colliding into second
 	time: Res<Time>,
 	mut ev_spawnfolder : EventWriter<FolderSpawnEvent>,
@@ -307,7 +401,7 @@ fn run_collisions(//first object is colliding into second
 					Some(Collision::Inside)=>{phys2.delta_x+=LAUNCH;phys1.delta_x-=LAUNCH;},
 					None=>(),
 				}
-				if phys1.delta_x.abs() < CUTOFF{
+				/*if phys1.delta_x.abs() < CUTOFF{
 					phys1.delta_x = 0.0;
 				}
 				if phys2.delta_x.abs() < CUTOFF{
@@ -320,7 +414,7 @@ fn run_collisions(//first object is colliding into second
 				if phys2.delta_y.abs() < CUTOFF{
 					phys2.delta_y = 0.0;
 					phys2.gravity = 0.0;
-				}
+				}*/
 				phys1.delta_y *= RESTITUTION;
 				phys2.delta_y *= RESTITUTION;
 				translation1.x += time.delta_seconds()*phys1.delta_x;
@@ -334,38 +428,43 @@ fn run_collisions(//first object is colliding into second
 				*translation1 = inbounds(*translation1, object1.size);
 				*translation2 = inbounds(*translation2, object2.size);
 			}
-			else{
+			/*else{
 				//info!("no collide");
 				phys1.gravity = 1.0;
 				phys2.gravity = 1.0;
-			}
+			}*/
 		
 	}
 }
 fn move_everything(
 	time: Res<Time>,
 	keyboard_input: Res<Input<KeyCode>>,
-	mut query: Query<(&mut Physics, &Size, &mut Transform, &mut Shape, Option<&Player>, Option<&Recycle>, Option<&Folder>)>,
+	mut query: Query<(&mut Physics, &Size, &mut Transform, &mut Shape, Option<&mut Player>, Option<&Recycle>, Option<&Folder>)>,
 ){
 	const X_ACCEL: f32 = 25.0;
 	const X_MAX_VEL: f32 = 100.0;
 	const GRAV: f32 = 10.0;
 	const Y_ACCEL: f32 = 200.0;
 	const FRICTION_SCALE: f32 = 0.75;
-	for (mut phys, object, mut transform, mut shape, player, recycle, folder) in query.iter_mut(){
+	for (mut phys, object, mut transform, mut shape, mut player, recycle, folder) in query.iter_mut(){
 		let translation = &mut transform.translation;
 		//accelerate in horizontal
-		phys.delta_y -= GRAV * phys.gravity;
-		if let Some(player)=player{
+		
+		if let Some(mut player)=player{
 			//info!("player trans x:{} y:{} z:{}",translation.x,translation.y,translation.z);
 			//info!("player shape x:{} y:{} z:{}",shape.origin.x,shape.origin.y,shape.origin.z);
 			//info!("y vel:{}",phys.delta_y);
+			phys.delta_y -= GRAV * phys.gravity;
+			let mut ground_check = player.as_mut();
 			let mut jumping = 0.0;
-			if keyboard_input.pressed(KeyCode::Left){
+			if !ground_check.is_grounded{
+				phys.gravity=1.0;
+			}
+			if keyboard_input.pressed(KeyCode::A){
 				phys.delta_x-= X_ACCEL;
 				//info!("left");
 			}
-			if keyboard_input.pressed(KeyCode::Right){
+			if keyboard_input.pressed(KeyCode::D){
 				phys.delta_x+= X_ACCEL;
 				//info!("right");
 			}
@@ -373,17 +472,18 @@ fn move_everything(
 				jumping = 1.0;
 				//info!("jump");
 			}
-			if translation.y <= -335.0 /*|| phys.delta_y.abs() < 1.0*/{//note: need to replace this with a function that checks for grounded for all physics entities
+			if translation.y <= -335.0{
+				ground_check.is_grounded=true;
+			}
+			if ground_check.is_grounded{//note: need to replace this with a function that checks for grounded for all physics entities
 				phys.delta_y = 0.0;
 				phys.delta_y += jumping * Y_ACCEL;
+				ground_check.is_grounded=false;
 			}
+			
 		}
 		else{
-			if let Some(folder) = folder{
-				//info!("recy trans x:{} y:{} z:{}",translation.x,translation.y,translation.z);
-				//info!("folder shape x:{} y:{} z:{}",shape.origin.x,shape.origin.y,shape.origin.z);
-				//info!("what");
-			}
+			phys.delta_y -= GRAV * phys.gravity;
 			if translation.y <= (-1.0*SCREEN_HEIGHT/2.0) +(object.size.y/2.0){
 				phys.delta_y = 0.0;
 			}
