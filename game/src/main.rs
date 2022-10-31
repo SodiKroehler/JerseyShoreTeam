@@ -40,6 +40,8 @@ static SCREEN_HEIGHT:f32 = 720.0;
 
 mod rover;
 use rover::RoverPlugin;
+mod ui;
+use ui::UiPlugin;
 
 fn main() {
 	App::new()
@@ -53,6 +55,7 @@ fn main() {
 		.add_plugins(DefaultPlugins)
 		.add_startup_system(setup)
 		.add_plugin(RoverPlugin)
+		.add_plugin(UiPlugin)
 		.add_event::<FolderSpawnEvent>()
 		//.add_system(roll_credits)
 		.add_system(move_everything)
