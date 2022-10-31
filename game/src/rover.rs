@@ -1,44 +1,76 @@
-use bevy::{prelude::*, ui::FocusPolicy};
+use bevy::prelude::*;
+use iyes_loopless::prelude::*;
 
 pub struct RoverPlugin;
+
+#[derive(Component)]
+enum SpeechState {
+    Inactive,
+    Waiting,
+    Thinking,
+    Talking,
+}
+
+#[derive(Component)]
+struct SpeechVal(String);
+#[derive(Component)]
+struct Rover;
 
 impl Plugin for RoverPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup_rover)
-        .add_system(text_input);
+        .add_system(text_input)
+        .add_system(
+            RoverRespond
+                .run_if(RoverShouldTalk)
+            ).run();
     }
 }
 
-fn despawn_gui(mut commands: Commands, button_query: Query<Entity, With<Button>>) {
-    for ent in button_query.iter() {
-        commands.entity(ent).despawn_recursive();
-    }
-}
-
-fn setup_rover(mut commands: Commands, assets: Res<AssetServer>) {
+fn setup_rover(mut commands: Commands, asset_server: Res<AssetServer>) {
     //commands.spawn_bundle(UiCameraBundle::default());
-    // commands.spawn((
-    //     TextBundle::from_section(
-    //         "hello\nbevy!",
-    //         TextStyle {
-    //             font: asset_server.load("assets/Jersey.ttf"),
-    //             font_size: 100.0,
-    //             color: Color::WHITE,
-    //         },
-    //     ) 
-    //     .with_text_alignment(TextAlignment::TOP_CENTER)
-    //     .with_style(Style {
-    //         position_type: PositionType::Absolute,
-    //         position: UiRect {
-    //             bottom: Val::Px(5.0),
-    //             right: Val::Px(15.0),
-    //             ..default()
-    //         },
-    //         ..default()
-    //     }),
-    //     ColorText,
-    // ));
+    commands.spawn()
+        .insert(Rover)
+        .insert(SpeechState)
+        .insert(SpeechVal(format("eat shit")));
+
+    commands.spawn_bundle(
+        TextBundle::from_sections([
+            TextSection::new(
+                "Rover: ",
+                TextStyle {
+                    font: asset_server.load("Jersey.ttf"),
+                    font_size: 20.0,
+                    color: Color::WHITE,
+                },
+            ),
+            TextSection::from_style(TextStyle {
+                font: asset_server.load("Jersey.ttf"),
+                font_size: 20.0,
+                color: Color::GOLD,
+            }),
+        ])
+        .with_style(Style {
+            align_self: AlignSelf::FlexEnd,
+            ..default()
+        }),
+    )
+    //.insert(RoverText);
+
 }   
+
+fn RoverShouldTalk(rstate: Res<RoverState>) -> bool {
+    rstate == RoverState::Talking
+}
+
+fn RoverRespond(
+    mut tquery: Query<&mut Text, 
+                            (With<RoverText>, 
+                            /*Changed<RoverRespText>*/)>){
+    for mut text in &mut tquery {
+                text.sections[1].value = format!("RoverText.val");
+    }
+}
 
 fn text_input(
     mut char_evr: EventReader<ReceivedCharacter>,
@@ -81,10 +113,11 @@ fn stemmer(mut strings: Vec<&str>) ->Vec<&str>  {
     new_strings
 }
 
-// fn spawnTextBox(
-//     commands: &mut Commands,
-//     text: &str,
-// ){
-//   //  commands.spawn(Camera2dBundle::default());
-//     let width = text.len() as f32 + 2.0;
+// fn answerer(int: procVal){
+//     let mut tquery = Query<&mut Text, With<RoverText>>;
+
+//     for mut text in &mut tquery {
+//         text.sections[1].value = format!("eat shit and die");
 // }
+// }
+
