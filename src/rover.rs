@@ -2,6 +2,7 @@ extern crate rust_stemmers;
 use rust_stemmers::{Algorithm, Stemmer};
 use bevy::prelude::*;
 use iyes_loopless::prelude::*;
+use stop_words;
 
 pub struct RoverPlugin;
 
@@ -182,25 +183,23 @@ fn text_input(
 }
 
 
-fn parser(input: &str) ->Vec<&str> {
+fn parser(input: &str) ->Vec<String> {
     let mut strings = Vec::new();
     let split = input.split(" ");
     for s in split {
-        strings.push(s); // .to_lowercase().as_str();
+        strings.push(s.to_lowercase()); 
     }  
     strings
 }
 
-fn stemmer(mut strings: Vec<&str>) ->Vec<String>  {
-    //let mut i=0;
+fn stemmer(mut strings: Vec<String>) ->Vec<String>  {
     let mut new_strings=Vec::new();
-    let stopword = vec!["a","about","above","across","after","afterwards","again","against","all", "almost","purpose"];
+    let stopwords = stop_words::get("english");
     let en_stemmer = Stemmer::create(Algorithm::English);
     for s in strings{
-         if stopword.contains(&&s)==false{
-            new_strings.push(en_stemmer.stem(s).into_owned());
+         if stopwords.contains(&&s)==false{
+            new_strings.push(en_stemmer.stem(&s).into_owned());
          }
-        //i+=1;
     }
     new_strings
 }
