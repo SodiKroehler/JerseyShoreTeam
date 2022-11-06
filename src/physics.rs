@@ -2,6 +2,7 @@ use bevy::{
 	prelude::*,
 	window::PresentMode, ecs::system::EntityCommands,
 };
+use iyes_loopless::prelude::*;
 pub struct PhysicsPlugin;
 
 use bevy::math::Vec2; 
@@ -22,16 +23,17 @@ use super::Physics;
 use super::Recycle;
 use super::SCREEN_WIDTH;
 use super::SCREEN_HEIGHT;
+use super::GameState;
 
 impl Plugin for PhysicsPlugin{
  	fn build(&self, app: &mut App){
  	
  	app
  		.add_event::<FolderSpawnEvent>()
-		.add_system(move_everything)
-		.add_system(run_collisions)
-		.add_system(grounded_folder)
-		.add_system(spawn_folder);
+		.add_system(move_everything.run_in_state(GameState::InGame))
+		.add_system(run_collisions.run_in_state(GameState::InGame))
+		.add_system(grounded_folder.run_in_state(GameState::InGame))
+		.add_system(spawn_folder.run_in_state(GameState::InGame));
  	}
  }
 fn spawn_folder(

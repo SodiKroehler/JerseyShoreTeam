@@ -2,6 +2,7 @@ use bevy::{
 	prelude::*,
 	window::PresentMode, ecs::system::EntityCommands,
 };
+use iyes_loopless::prelude::*;
 use bevy::math::Vec2; 
 use bevy::math::Vec3;
 use bevy::asset::LoadState;
@@ -37,7 +38,10 @@ struct Physics{
 struct Recycle{}
 static SCREEN_WIDTH:f32 = 1280.0;
 static SCREEN_HEIGHT:f32 = 720.0;
-
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+enum GameState{
+	InGame,
+}
 //mod rover;
 //use rover::RoverPlugin;
 //mod ui;
@@ -54,6 +58,7 @@ fn main() {
 			present_mode: PresentMode::Fifo,
 			..default()
 		})
+		.add_loopless_state(GameState::InGame)
 		.add_plugins(DefaultPlugins)
 		.add_startup_system(setup)
 		//.add_plugin(RoverPlugin)
