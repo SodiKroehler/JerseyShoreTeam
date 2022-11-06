@@ -1,5 +1,6 @@
 use bevy::ecs::component::Component;
 use bevy::math::{Vec2, Vec3};
+use bevy::prelude::shape;
 pub struct Shape {
     pub vertices: Vec<Vec3>,
     pub origin: Vec3,
@@ -170,14 +171,14 @@ pub fn move_shape(shape: &mut Shape, direction: Vec3) -> &mut Shape {
 }
 
 pub fn sat_polygon_polygon(shape_a: RB, shape_b: RB) -> Option<CollisionInfo> {
-    let a_vertices: Vec<Vec3> = shape_a.collider.vertices.to_vec();
-    let b_vertices: Vec<Vec3> = shape_b.collider.vertices.to_vec();
+    let a_vertices: Vec<Vec3> = line_work(shape_a.collider.vertices.to_vec());
+    let b_vertices: Vec<Vec3> = line_work(shape_b.collider.vertices.to_vec());
     let a_pos: Vec3 = shape_a.position;
     let b_pos: Vec3 = shape_b.position;
     println!("{}", a_pos);
     let mut axes: Vec<Vec2> = vec![Default::default(); 0]; //perpindicular axes to project onto
-    let mut poly_a = Vec::<Vec2>::with_capacity(6);
-    let mut poly_b = Vec::<Vec2>::with_capacity(6);
+    let mut poly_a = Vec::<Vec2>::with_capacity(a_vertices.len());
+    let mut poly_b = Vec::<Vec2>::with_capacity(b_vertices.len());
     let mut shortest: f32 = f32::MAX;
 
     let mut col: CollisionInfo = CollisionInfo::new(shape_a, shape_b);
@@ -190,26 +191,28 @@ pub fn sat_polygon_polygon(shape_a: RB, shape_b: RB) -> Option<CollisionInfo> {
         poly_b.push(b.truncate());
     }
 
-    for i in 0..poly_a.len() {
-        axes.push(
-            Vec2 {
-                //get perpindicular to axis
-                x: poly_a[i].y - poly_a[(i + 1) % poly_a.len()].y,
-                y: poly_a[(i + 1) % poly_a.len()].x - poly_a[i].x,
-            }
-            .normalize_or_zero(),
-        );
-    }
-    for i in 0..poly_b.len() {
-        axes.push(
-            Vec2 {
-                //get perpindicular
-                x: poly_b[i].y - poly_b[(i + 1) % poly_b.len()].y,
-                y: poly_b[(i + 1) % poly_b.len()].x - poly_b[i].x,
-            }
-            .normalize_or_zero(),
-        );
-    }
+    axes = make_normal(&poly_a.to_vec(), axes);
+    axes = make_normal(&poly_b.to_vec(), axes);
+    // for i in 0..poly_a.len() {
+    //     axes.push(
+    //         Vec2 {
+    //             //get perpindicular to axis
+    //             x: poly_a[i].y - poly_a[(i + 1) % poly_a.len()].y,
+    //             y: poly_a[(i + 1) % poly_a.len()].x - poly_a[i].x,
+    //         }
+    //         .normalize_or_zero(),
+    //     );
+    // }
+    // for i in 0..poly_b.len() {
+    //     axes.push(
+    //         Vec2 {
+    //             //get perpindicular
+    //             x: poly_b[i].y - poly_b[(i + 1) % poly_b.len()].y,
+    //             y: poly_b[(i + 1) % poly_b.len()].x - poly_b[i].x,
+    //         }
+    //         .normalize_or_zero(),
+    //     );
+    // }
 
     let v_offset: Vec2 = Vec2 {
         //offset of shape origins
@@ -221,7 +224,7 @@ pub fn sat_polygon_polygon(shape_a: RB, shape_b: RB) -> Option<CollisionInfo> {
         let mut poly_a_range: (f32, f32) = project_shape(&poly_a, &axes[i]);
         let poly_b_range: (f32, f32) = project_shape(&poly_b, &axes[i]);
 
-        let offset = axes[i].dot(v_offset); //project the shape offset onto this axis
+        let offset = axes[i].dot(v_offset.clone()); //project the shape offset onto this axis
         poly_a_range.0 += offset; //put shape A onto this offset
         poly_a_range.1 += offset;
 
@@ -230,7 +233,7 @@ pub fn sat_polygon_polygon(shape_a: RB, shape_b: RB) -> Option<CollisionInfo> {
             return None;
         }
 
-        let checked: (bool, bool) = check_range(poly_a_range, poly_b_range, false);
+        let checked: (bool, bool) = check_range(poly_a_range, poly_b_range);
         col.contain_a = checked.0;
         col.contain_b = checked.1;
 
@@ -245,13 +248,136 @@ pub fn sat_polygon_polygon(shape_a: RB, shape_b: RB) -> Option<CollisionInfo> {
         }
     }
 
-    col.seperation = Vec2 {
-        //how to get the shape outside
-        x: col.vector.x * col.distance,
-        y: col.vector.y * col.distance,
-    };
+    col.seperation = col.vector * col.distance; //how to move the polygon out of the other
 
     return Some(col);
+}
+
+pub fn circle_collide(shape_a: RB, shape_b: RB) -> Option<CollisionInfo> {
+    let distance = (shape_a.position.x - shape_b.position.x).powf(2.0)
+        + (shape_a.position.y - shape_b.position.y).powf(2.0);
+    let size = shape_a.collider.radius + shape_b.collider.radius;
+
+    if distance > size {
+        return None;
+    }
+
+    let mut col: CollisionInfo = CollisionInfo::new(shape_a, shape_b);
+
+    col.vector = Vec2 {
+        x: shape_b.position.x - shape_a.position.x,
+        y: shape_b.position.y - shape_a.position.y,
+    }
+    .normalize();
+
+    col.distance = distance;
+
+    let diff = size - distance;
+    col.seperation = Vec2 {
+        x: col.vector.x * diff,
+        y: col.vector.y * diff,
+    };
+
+    col.contain_a = shape_a.collider.radius <= shape_b.collider.radius
+        && distance <= shape_b.collider.radius - shape_a.collider.radius;
+    col.contain_b = shape_b.collider.radius <= shape_a.collider.radius
+        && distance <= shape_a.collider.radius - shape_b.collider.radius;
+
+    return Some(col);
+}
+
+pub fn poly_circle_collide(polygon: RB, circle: RB) -> Option<CollisionInfo> {
+    let mut shortest = f32::MIN;
+    let vertices: Vec<Vec3> = line_work(polygon.collider.vertices.to_vec());
+    let poly: Vec<Vec2> = Vec::<Vec2>::with_capacity(vertices.len());
+    let mut axes: Vec<Vec2> = vec![Default::default(); 0];
+
+    for a in vertices.iter() {
+        poly.push(a.truncate());
+    }
+
+    let v_offset: Vec2 = (polygon.position - circle.position).truncate();
+
+    let close: Vec2 = Vec2 { x: 0.0, y: 0.0 };
+    for v in poly.iter() {
+        let t = *v + polygon.position.truncate();
+        let distance = circle.position.truncate().distance(t);
+        if distance < shortest {
+            shortest = distance;
+            close.x = polygon.position.x + v.x;
+            close.y = polygon.position.y + v.y;
+        }
+    }
+
+    let axis: Vec2 = Vec2 {
+        x: close.x - circle.position.x,
+        y: close.y - circle.position.y,
+    };
+
+    let p_range = project_shape(&poly, &axis);
+    let s_offset = axis.dot(v_offset.clone());
+    p_range.0 += s_offset;
+    p_range.1 += s_offset;
+
+    let c_range = project_circle(&circle.collider.radius, &axis);
+    if (p_range.0 - c_range.1 > 0.0) || (c_range.0 - p_range.1 > 0.0) {
+        return None;
+    }
+
+    let distance_min = c_range.1 - p_range.0;
+    shortest = distance_min.abs();
+
+    let mut col = CollisionInfo::new(polygon, circle);
+    col.distance = distance_min;
+    col.vector = axis;
+
+    (col.contain_a, col.contain_b) = check_range(p_range, c_range);
+
+    axes = make_normal(&poly, axes);
+
+    for i in 0..poly.len() {
+        p_range = project_shape(&poly, &axes[i]);
+
+        s_offset = axes[i].dot(v_offset);
+        p_range.0 += s_offset;
+        p_range.1 += s_offset;
+
+        c_range = project_circle(&circle.collider.radius, &axes[i]);
+
+        if (p_range.0 - c_range.1 > 0.0) || (c_range.0 - p_range.1 > 0.0) {
+            return None;
+        }
+
+        (col.contain_a, col.contain_b) = check_range(p_range, c_range);
+
+        distance_min = c_range.1 - p_range.0;
+
+        if distance_min.abs() < shortest {
+            shortest = distance_min.abs();
+
+            col.distance = distance_min;
+            col.vector = axes[i];
+        }
+    }
+
+    col.seperation = col.vector * col.distance;
+
+    return Some(col);
+}
+
+fn line_work(verts: Vec<Vec3>) -> Vec<Vec3> {
+    if verts.len() == 2 {
+        let p1: Vec3 = verts[0];
+        let p2: Vec3 = verts[1];
+        let p3: Vec3 = Vec3 {
+            x: p1.y - p2.y,
+            y: p2.x - p1.x,
+            z: p1.z,
+        };
+        p3 = p3.normalize() * 0.00001;
+        verts.push(p3);
+    }
+    verts
 }
 
 pub fn project_shape(shape: &Vec<Vec2>, axis: &Vec2) -> (f32, f32) {
@@ -269,35 +395,45 @@ pub fn project_shape(shape: &Vec<Vec2>, axis: &Vec2) -> (f32, f32) {
     (min_val, max_val)
 }
 
-pub fn check_range(range_a: (f32, f32), range_b: (f32, f32), invert: bool) -> (bool, bool) {
+pub fn project_circle(radius: &f32, axis: &Vec2) -> (f32, f32) {
+    let projection = axis.dot(Vec2 { x: 0.0, y: 0.0 });
+    (projection - radius, projection + radius)
+}
+
+pub fn check_range(range_a: (f32, f32), range_b: (f32, f32)) -> (bool, bool) {
     //sees if shapes are contained with another
     let mut contain_a: bool = true;
     let mut contain_b: bool = true;
-    if invert {
-        if range_a.1 < range_b.1 || range_a.0 > range_b.0 {
-            contain_a = false
-        }
-        if range_b.1 < range_a.1 || range_b.0 > range_a.0 {
-            contain_b = false
-        }
-    } else {
-        if range_a.1 > range_b.1 || range_a.0 < range_b.0 {
-            contain_a = false
-        }
-        if range_b.1 > range_a.1 || range_b.0 < range_a.0 {
-            contain_b = false
-        }
+    if range_a.1 > range_b.1 || range_a.0 < range_b.0 {
+        contain_a = false
+    }
+    if range_b.1 > range_a.1 || range_b.0 < range_a.0 {
+        contain_b = false
     }
 
     (contain_a, contain_b)
 }
 
-pub fn resolve(info: &mut CollisionInfo, dt: bevy::utils::Duration) {
-    //calc torque and force. kinda be lookin like newtons second if you know what i mean yuh yuh yuh yuh google picture of newtowns second law and come back to me B) yup thats right its fucking sweet right?
-    let mut rb_a: &RB = &info.shape_a;
-    let mut rb_b: &RB = &info.shape_b;
+fn make_normal(verts: &Vec<Vec2>, axes: Vec<Vec2>) -> Vec<Vec2> {
+    for i in 0..verts.len() {
+        axes.push(
+            Vec2 {
+                //get perpindicular to axis
+                x: verts[i].y - verts[(i + 1) % verts.len()].y,
+                y: verts[(i + 1) % verts.len()].x - verts[i].x,
+            }
+            .normalize_or_zero(),
+        );
+    }
+    axes
+}
 
-    info.vector;
+pub fn resolve(info: CollisionInfo, dt: bevy::utils::Duration) -> CollisionInfo {
+    //calc torque and force. kinda be lookin like newtons second if you know what i mean yuh yuh yuh yuh google picture of newtowns second law and come back to me B) yup thats right its fucking sweet right?
+    let mut rb_a: RB = info.shape_a;
+    let mut rb_b: RB = info.shape_b;
+
+    info
 }
 
 pub fn add_forces(rb: RB) {}
