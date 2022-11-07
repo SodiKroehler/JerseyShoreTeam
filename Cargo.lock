@@ -1428,6 +1428,8 @@ dependencies = [
  "alsa",
  "bevy",
  "iyes_loopless",
+ "rust-stemmers",
+ "stop-words",
 ]
 
 [[package]]
@@ -2537,6 +2539,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "rust-stemmers"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e46a2036019fdb888131db7a4c847a1063a7493f971ed94ea82c67eada63ca54"
+dependencies = [
+ "serde",
+ "serde_derive",
+]
+
+[[package]]
 name = "rustc-hash"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2668,6 +2680,12 @@ name = "stdweb"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ef5430c8e36b713e13b48a9f709cc21e046723fe44ce34587b73a830203b533e"
+
+[[package]]
+name = "stop-words"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "66101ac71ec0883638840f5f482c41e6826e8baf84348d835fc5a92d1531d168"
 
 [[package]]
 name = "strsim"
