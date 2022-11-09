@@ -22,6 +22,8 @@ struct FolderSpawnEvent(Vec3);//holds the position vector of the spawner
 #[derive(Component)]
 struct Player{
 	is_grounded: bool,
+	is_colliding_left: bool,
+	is_colliding_right: bool,
 }
 #[derive(Component)]
 struct Folder{}
@@ -94,6 +96,8 @@ fn setup(mut commands: Commands,
 		..default()
 		}).insert(Player{
 			is_grounded:false,
+			is_colliding_left:false,
+			is_colliding_right:false,
 		})
 		.insert(Size{
 			size: Vec2{

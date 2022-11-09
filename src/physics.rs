@@ -194,9 +194,9 @@ fn grounded_folder(//first object is colliding into second
 	let mut obj_pairs = obj_list.iter_combinations_mut();
 	while let Some([(e1, object1, mut transform1, mut phys1, mut player1, folder1), (e2, object2, mut transform2, mut phys2, mut player2, folder2)]) = obj_pairs.fetch_next(){
 		if let Some(mut player1) = player1{
+			let mut collision_check = player1.as_mut();
 			if let Some(folder2) = folder2{
 				let phys = phys1.as_mut().unwrap();
-				let mut ground_check = player1.as_mut();
 				let translation1 = &mut transform1.translation;
 				let translation2 = &mut transform2.translation;
 				let size1 = object1.size;
@@ -205,9 +205,9 @@ fn grounded_folder(//first object is colliding into second
 				if c.is_some(){
 					//info!("collide");
 					match c{
-						Some(Collision::Left)=>{phys.delta_x=0.0;},
-						Some(Collision::Right)=>{phys.delta_x=0.0;},
-						Some(Collision::Top)=>{phys.delta_y=0.0;phys.gravity=0.0;ground_check.is_grounded=true;},
+						Some(Collision::Left)=>{phys.delta_x=0.0;collision_check.is_colliding_left=true;},
+						Some(Collision::Right)=>{phys.delta_x=0.0;collision_check.is_colliding_right=true;},
+						Some(Collision::Top)=>{phys.delta_y=0.0;phys.gravity=0.0;collision_check.is_grounded=true;},
 						Some(Collision::Bottom)=>{phys.delta_y=0.0;},
 						Some(Collision::Inside)=>{phys.delta_x=0.0;},
 						None=>(),
@@ -216,6 +216,8 @@ fn grounded_folder(//first object is colliding into second
 				}
 				else{
 					//info!("no collide");
+					collision_check.is_colliding_left=false;
+					collision_check.is_colliding_right=false;
 					phys.gravity = 1.0;
 				}
 			}
@@ -316,16 +318,16 @@ fn move_everything(
 			//info!("player shape x:{} y:{} z:{}",shape.origin.x,shape.origin.y,shape.origin.z);
 			//info!("y vel:{}",phys.delta_y);
 			phys.delta_y -= GRAV * phys.gravity;
-			let mut ground_check = player.as_mut();
+			let mut collision_check = player.as_mut();
 			let mut jumping = 0.0;
-			if !ground_check.is_grounded{
+			if !collision_check.is_grounded{
 				phys.gravity=1.0;
 			}
-			if keyboard_input.pressed(KeyCode::A){
+			if keyboard_input.pressed(KeyCode::A) && !collision_check.is_colliding_right{
 				phys.delta_x-= X_ACCEL;
 				//info!("left");
 			}
-			if keyboard_input.pressed(KeyCode::D){
+			if keyboard_input.pressed(KeyCode::D) && !collision_check.is_colliding_left{
 				phys.delta_x+= X_ACCEL;
 				//info!("right");
 			}
@@ -334,12 +336,12 @@ fn move_everything(
 				//info!("jump");
 			}
 			if translation.y <= -335.0{
-				ground_check.is_grounded=true;
+				collision_check.is_grounded=true;
 			}
-			if ground_check.is_grounded{//note: need to replace this with a function that checks for grounded for all physics entities
+			if collision_check.is_grounded{//note: need to replace this with a function that checks for grounded for all physics entities
 				phys.delta_y = 0.0;
 				phys.delta_y += jumping * Y_ACCEL;
-				ground_check.is_grounded=false;
+				collision_check.is_grounded=false;
 			}
 			
 		}
