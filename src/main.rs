@@ -11,7 +11,7 @@ use collide_circle::Collision;
 mod collidenew;
 use collidenew::Shape;
 use collidenew::CollisionInfo;
-use iyes_loopless::prelude::*;
+
 
 #[derive(Component, Deref, DerefMut)]
 struct CreditTimer(Timer);
@@ -43,14 +43,17 @@ struct Physics{
 struct Recycle{}
 static SCREEN_WIDTH:f32 = 1280.0;
 static SCREEN_HEIGHT:f32 = 720.0;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum GameState{
 	InGame,
+	Paused,
+	Rover,
 }
-//mod rover;
-//use rover::RoverPlugin;
-//mod ui;
-//use ui::UiPlugin;
+mod rover;
+use rover::RoverPlugin;
+mod ui;
+use ui::UiPlugin;
 mod physics;
 use physics::PhysicsPlugin;
 
@@ -66,17 +69,10 @@ fn main() {
 		.add_loopless_state(GameState::InGame)
 		.add_plugins(DefaultPlugins)
 		.add_startup_system(setup)
-		//.add_plugin(RoverPlugin)
-		//.add_plugin(UiPlugin)
+		.add_plugin(RoverPlugin)
+		.add_plugin(UiPlugin)
 		.add_plugin(PhysicsPlugin)
 		//.add_system(roll_credits)
-		.add_system(
-            move_everything
-                .run_if(rover::RoverIsInactive))
-		.add_system(run_collisions3)
-		//.add_system(run_collisions)
-		.add_system(grounded_folder)
-		.add_system(spawn_folder)
 		.run();
 }
 

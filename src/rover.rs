@@ -56,6 +56,7 @@ impl Plugin for RoverPlugin {
                     .run_in_state(RoverState::Thinking))
             .add_enter_system(RoverState::Thinking, chat_update)
             .add_enter_system(RoverState::Talking, chat_update)
+            .add_system(debug_current_state)
             .add_system(
                 TEMP_move_to_talking
                     .run_in_state(RoverState::Talking))    
@@ -70,10 +71,19 @@ fn setup_rover(mut commands: Commands, asset_server: Res<AssetServer>) {
     //   //  .insert(SpeechState::Talking);
 }   
 
+fn debug_current_state(state: Res<CurrentState<GameState>>,
+                        rstate: Res<CurrentState<RoverState>>) {
+    if state.is_changed() {
+        println!("Detected state change to {:?}!", state);
+    }
+    if rstate.is_changed() {
+        println!("Detected state change to {:?}!", rstate);
+    }
+}
 
 fn TEMP_move_to_talking(mut commands: Commands, mut msg: ResMut<LastChat>) {
     commands.insert_resource(NextState(RoverState::Listening));
-    msg.val.clear();
+    msg.val = "".to_owned();
 }
 
 fn chat_update(
@@ -84,10 +94,7 @@ fn chat_update(
     mut c_parent: Query<Entity, (With<chatParent>, With<Children>)>,
     sp: Res<LastChat>){
         let current_speaker = &sp.name;   
-        let mut counter = 1.0;   
-        for mut child_transform in c_child.iter_mut() {
-            counter+=25.0;
-        }
+        let mut counter = 25.0;   
         let newmsg = commands.spawn_bundle(
             TextBundle::from_sections([
                 TextSection::new(
@@ -106,29 +113,20 @@ fn chat_update(
                         color: Color::WHITE,
                     },
                 ),
-            ]).with_style(Style {
-                //position_type: PositionType::Absolute,
-                position: UiRect {
-                    bottom: Val::Px(counter),
-                    left: Val::Px(0.0),
-                    ..default()
-                },
-                ..default()
-            }
-        )).insert(chatMessage)
-        .id();
+            ])).insert(chatMessage)
+                .id();
 
-        // for mut child_transform in c_child.iter_mut() {
-        //     counter+=25.0;
-        //     child_transform.sections[0]. position.bottom += counter;
-        //     child_transform.sections[1].style.position.bottom += counter;
-        //     // `parent` contains the Entity ID we can use
-        //     // to query components from the parent:
-        //     //let parent_ = q_parent.get(parent.get());
-        //    // *child_transform = Transform::from_xyz(0.0,-25.0,1.0);
-        //   // child_transform.translation.y += counter;
-        //   // info!("transform now: {}", child_transform.translation.y);
-        // }
+        for mut child_transform in c_child.iter_mut() {
+            counter+=25.0;
+           // child_transform.sections[0].style.position.bottom += counter;
+           // child_transform.sections[1].style.position.bottom += counter;
+            // `parent` contains the Entity ID we can use
+            // to query components from the parent:
+            //let parent_ = q_parent.get(parent.get());
+           // *child_transform = Transform::from_xyz(0.0,-25.0,1.0);
+          // child_transform.translation.y += counter;
+          // info!("transform now: {}", child_transform.translation.y);
+        }
 
         // for rtext in tquery.iter(){
         let big_parent = c_parent.single();
@@ -142,7 +140,10 @@ fn chat_update(
 fn open_rover(
     mut commands: Commands, 
     asset_server: Res<AssetServer>){
-        let big_parent = commands.spawn_bundle(
+
+        //let sizeOfChatBox = Size::new(Val::Px(100.0), Val::Px(100.0));
+
+        commands.spawn_bundle(
             TextBundle::from_sections([
                 TextSection::new(
                     "",
@@ -152,11 +153,35 @@ fn open_rover(
                         color: Color::WHITE,
                     },
                 ),
-            ]).with_text_alignment(TextAlignment::TOP_CENTER)
-        ).insert(userInput)
-        .insert(chatParent)
-        .id();
+            ])).insert(userInput);
+        
 
+
+            let big_parent = commands.spawn_bundle(
+                TextBundle::from_sections([
+                    TextSection::new(
+                        "",
+                        TextStyle {
+                            font: asset_server.load("Jersey.ttf"),
+                            font_size: 20.0,
+                            color: Color::WHITE,
+                        },
+                    ),
+                ]).with_style(Style {
+                        align_items: AlignItems::FlexEnd,
+                        justify_content: JustifyContent::FlexStart,
+                        flex_basis: Val::Px(50.0),
+                        overflow: Overflow::Hidden,
+                        flex_direction: FlexDirection::ColumnReverse,
+                        position_type: PositionType::Absolute,
+                        position: UiRect {
+                            bottom: Val::Px(25.0),
+                            left: Val::Px(0.0),
+                            ..default()
+                        },
+                        ..default()
+                })).insert(chatParent)
+                .id();
 
         let current_speaker = "Rover:";
         let first_line = commands.spawn_bundle(
@@ -177,17 +202,7 @@ fn open_rover(
                         color: Color::WHITE,
                     },
                 ),
-            ]).with_style(Style {
-                position_type: PositionType::Absolute,
-                position: UiRect {
-                    bottom: Val::Px(25.0),
-                    left: Val::Px(0.0),
-                    ..default()
-                },
-                ..default()
-            }
-        )).insert(chatMessage)
-        .id();   
+            ])).insert(chatMessage).id();   
 
         commands.entity(big_parent).push_children(&[first_line]);
 
@@ -196,6 +211,9 @@ fn open_rover(
             transform: Transform::from_xyz(-300.0,-325.0,1.0),
             ..default()
             }).insert(roverSprite);
+    
+        commands.insert_resource(NextState(RoverState::Listening));
+            
     }
 
 fn close_rover(mut commands: Commands, 
@@ -228,13 +246,11 @@ fn text_input(
         //let mut k_input :String = "".to_owned();
 
         for ev in char_evr.iter() {
-            //info!(input);
             msg.val.push(ev.char);
             userText.sections[0].value = format!("{}{}", userText.sections[0].value, ev.char);
             
         }
         if keys.just_pressed(KeyCode::Return) {      
-            info!("input now: {}", msg.val);
             userText.sections[0].value = format!("");
             //msg.val = format!("{}", input);
             msg.name = "root: ".to_owned();
@@ -244,9 +260,9 @@ fn text_input(
         
 
         if keys.just_pressed(KeyCode::Escape) {
-           // commands.insert_resource(NextState(RoverState::Listening));
+            commands.insert_resource(NextState(RoverState::Inactive));
             commands.insert_resource(NextState(GameState::InGame));
-            info!("escape pressed");
+            return;
         }
 }
 

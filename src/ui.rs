@@ -16,10 +16,11 @@ impl Plugin for UiPlugin {
 }
 
 fn processTriggers(mut commands: Commands, kbd: Res<Input<KeyCode>>) {
-    if kbd.just_pressed(KeyCode::Escape) {
-        commands.insert_resource(NextState(GameState::Paused));
-    }
+    // if kbd.just_pressed(KeyCode::Escape) {
+    //     commands.insert_resource(NextState(GameState::Paused));
+    // }
     if kbd.just_pressed(KeyCode::B) {
         commands.insert_resource(NextState(GameState::Rover));
+        return;
     }
 }
