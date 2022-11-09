@@ -30,6 +30,8 @@ struct Folder{}
 #[derive(Component)]
 struct RigidFolder{}
 #[derive(Component)]
+struct Border{}
+#[derive(Component)]
 struct Physics{
 	delta_x: f32,
 	delta_y: f32,
@@ -182,30 +184,42 @@ fn setup(mut commands: Commands,
 				y:32.0,
 			}
 		});
-		commands.spawn()
+	/*commands.spawn()//DO NOT MOVE
 		.insert_bundle(SpriteBundle{
-		texture: asset_server.load("folder_red.png"),
-		transform: Transform::from_xyz(-660.0,-370.0,1.0),
+		transform: Transform::from_xyz(0.0,-385.0,1.0),
 		..default()
-		}).insert(RigidFolder{
+		}).insert(Border{
 		}).insert(Size{
 			size: Vec2{
-				x:2600.0,
-				y:32.0,
+				x:1300.0,
+				y:50.0,
 			}
+		}).insert(Physics{
+			delta_x:0.0,
+			delta_y:0.0,
+			gravity:0.0,
+		}).insert(Shape{
+			vertices: vec![Vec3::new(-650.0,25.0,0.0),Vec3::new(650.0,25.0,0.0),Vec3::new(650.0,-25.0,0.0),Vec3::new(-650.0,-25.0,0.0)],
+			origin: Vec3::new(0.0,-385.0,1.0),//needs to be same as starting transform
 		});
-		commands.spawn()
+	commands.spawn()//DO NOT MOVE
 		.insert_bundle(SpriteBundle{
-		texture: asset_server.load("folder_red.png"),
-		transform: Transform::from_xyz(-660.0,360.0,1.0),
+		transform: Transform::from_xyz(0.0,385.0,1.0),
 		..default()
-		}).insert(RigidFolder{
+		}).insert(Border{
 		}).insert(Size{
 			size: Vec2{
-				x:2600.0,
-				y:32.0,
+				x:1300.0,
+				y:50.0,
 			}
-		});
+		}).insert(Physics{
+			delta_x:0.0,
+			delta_y:0.0,
+			gravity:0.0,
+		}).insert(Shape{
+			vertices: vec![Vec3::new(-650.0,25.0,0.0),Vec3::new(650.0,25.0,0.0),Vec3::new(650.0,-25.0,0.0),Vec3::new(-650.0,-25.0,0.0)],
+			origin: Vec3::new(0.0,385.0,1.0),//needs to be same as starting transform
+		});*/
 
 }
 fn roll_credits(
