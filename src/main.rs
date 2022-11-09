@@ -22,6 +22,8 @@ struct FolderSpawnEvent(Vec3);//holds the position vector of the spawner
 #[derive(Component)]
 struct Player{
 	is_grounded: bool,
+	is_colliding_left: bool,
+	is_colliding_right: bool,
 }
 #[derive(Component)]
 struct Folder{}
@@ -94,6 +96,8 @@ fn setup(mut commands: Commands,
 		..default()
 		}).insert(Player{
 			is_grounded:false,
+			is_colliding_left:false,
+			is_colliding_right:false,
 		})
 		.insert(Size{
 			size: Vec2{
@@ -175,6 +179,30 @@ fn setup(mut commands: Commands,
 		}).insert(Size{
 			size: Vec2{
 				x:37.0,
+				y:32.0,
+			}
+		});
+		commands.spawn()
+		.insert_bundle(SpriteBundle{
+		texture: asset_server.load("folder_red.png"),
+		transform: Transform::from_xyz(-660.0,-370.0,1.0),
+		..default()
+		}).insert(RigidFolder{
+		}).insert(Size{
+			size: Vec2{
+				x:2600.0,
+				y:32.0,
+			}
+		});
+		commands.spawn()
+		.insert_bundle(SpriteBundle{
+		texture: asset_server.load("folder_red.png"),
+		transform: Transform::from_xyz(-660.0,360.0,1.0),
+		..default()
+		}).insert(RigidFolder{
+		}).insert(Size{
+			size: Vec2{
+				x:2600.0,
 				y:32.0,
 			}
 		});
