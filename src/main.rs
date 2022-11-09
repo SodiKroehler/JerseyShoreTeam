@@ -11,6 +11,7 @@ use collide_circle::Collision;
 mod collidenew;
 use collidenew::Shape;
 use collidenew::CollisionInfo;
+use iyes_loopless::prelude::*;
 
 #[derive(Component, Deref, DerefMut)]
 struct CreditTimer(Timer);
@@ -65,6 +66,13 @@ fn main() {
 		//.add_plugin(UiPlugin)
 		.add_plugin(PhysicsPlugin)
 		//.add_system(roll_credits)
+		.add_system(
+            move_everything
+                .run_if(rover::RoverIsInactive))
+		.add_system(run_collisions3)
+		//.add_system(run_collisions)
+		.add_system(grounded_folder)
+		.add_system(spawn_folder)
 		.run();
 }
 
