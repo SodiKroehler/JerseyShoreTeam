@@ -23,11 +23,15 @@ struct FolderSpawnEvent(Vec3);//holds the position vector of the spawner
 #[derive(Component)]
 struct Player{
 	is_grounded: bool,
+	is_colliding_left: bool,
+	is_colliding_right: bool,
 }
 #[derive(Component)]
 struct Folder{}
 #[derive(Component)]
 struct RigidFolder{}
+#[derive(Component)]
+struct Border{}
 #[derive(Component)]
 struct Physics{
 	delta_x: f32,
@@ -102,6 +106,8 @@ fn setup(mut commands: Commands,
 		..default()
 		}).insert(Player{
 			is_grounded:false,
+			is_colliding_left:false,
+			is_colliding_right:false,
 		})
 		.insert(Size{
 			size: Vec2{
@@ -186,6 +192,42 @@ fn setup(mut commands: Commands,
 				y:32.0,
 			}
 		});
+	/*commands.spawn()//DO NOT MOVE
+		.insert_bundle(SpriteBundle{
+		transform: Transform::from_xyz(0.0,-385.0,1.0),
+		..default()
+		}).insert(Border{
+		}).insert(Size{
+			size: Vec2{
+				x:1300.0,
+				y:50.0,
+			}
+		}).insert(Physics{
+			delta_x:0.0,
+			delta_y:0.0,
+			gravity:0.0,
+		}).insert(Shape{
+			vertices: vec![Vec3::new(-650.0,25.0,0.0),Vec3::new(650.0,25.0,0.0),Vec3::new(650.0,-25.0,0.0),Vec3::new(-650.0,-25.0,0.0)],
+			origin: Vec3::new(0.0,-385.0,1.0),//needs to be same as starting transform
+		});
+	commands.spawn()//DO NOT MOVE
+		.insert_bundle(SpriteBundle{
+		transform: Transform::from_xyz(0.0,385.0,1.0),
+		..default()
+		}).insert(Border{
+		}).insert(Size{
+			size: Vec2{
+				x:1300.0,
+				y:50.0,
+			}
+		}).insert(Physics{
+			delta_x:0.0,
+			delta_y:0.0,
+			gravity:0.0,
+		}).insert(Shape{
+			vertices: vec![Vec3::new(-650.0,25.0,0.0),Vec3::new(650.0,25.0,0.0),Vec3::new(650.0,-25.0,0.0),Vec3::new(-650.0,-25.0,0.0)],
+			origin: Vec3::new(0.0,385.0,1.0),//needs to be same as starting transform
+		});*/
 
 }
 fn roll_credits(
