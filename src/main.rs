@@ -182,6 +182,30 @@ fn setup(mut commands: Commands,
 				y:32.0,
 			}
 		});
+		commands.spawn()
+		.insert_bundle(SpriteBundle{
+		texture: asset_server.load("folder_red.png"),
+		transform: Transform::from_xyz(-660.0,-370.0,1.0),
+		..default()
+		}).insert(RigidFolder{
+		}).insert(Size{
+			size: Vec2{
+				x:2600.0,
+				y:32.0,
+			}
+		});
+		commands.spawn()
+		.insert_bundle(SpriteBundle{
+		texture: asset_server.load("folder_red.png"),
+		transform: Transform::from_xyz(-660.0,360.0,1.0),
+		..default()
+		}).insert(RigidFolder{
+		}).insert(Size{
+			size: Vec2{
+				x:2600.0,
+				y:32.0,
+			}
+		});
 
 }
 fn roll_credits(
