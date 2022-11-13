@@ -7,6 +7,7 @@ pub struct PhysicsPlugin;
 
 use bevy::math::Vec2; 
 use bevy::math::Vec3;
+use bevy::utils::Duration;
 use bevy::asset::LoadState;
 use super::collide_circle::Collision;
 use super::collide_circle::collide;
@@ -30,11 +31,15 @@ impl Plugin for PhysicsPlugin{
  	fn build(&self, app: &mut App){
  	
  	app
+ 		.add_fixed_timestep(
+ 			Duration::from_millis(33),
+ 			"physics_update",
+ 		)
  		.add_event::<FolderSpawnEvent>()
-		.add_system(move_everything.run_in_state(GameState::InGame))
-		.add_system(run_collisions.run_in_state(GameState::InGame))
-		.add_system(grounded_folder.run_in_state(GameState::InGame))
-		.add_system(spawn_folder.run_in_state(GameState::InGame));
+		.add_fixed_timestep_system("physics_update",0,move_everything.run_in_state(GameState::InGame))
+		.add_fixed_timestep_system("physics_update",0,run_collisions.run_in_state(GameState::InGame))
+		.add_fixed_timestep_system("physics_update",0,grounded_folder.run_in_state(GameState::InGame))
+		.add_fixed_timestep_system("physics_update",0,spawn_folder.run_in_state(GameState::InGame));
  	}
  }
 fn spawn_folder(
@@ -357,7 +362,7 @@ fn move_everything(
 	const X_ACCEL: f32 = 25.0;
 	const X_MAX_VEL: f32 = 100.0;
 	const GRAV: f32 = 10.0;
-	const Y_ACCEL: f32 = 200.0;
+	const Y_ACCEL: f32 = 250.0;
 	const FRICTION_SCALE: f32 = 0.75;
 	for (mut phys, object, mut transform, mut shape, mut player, recycle, folder, border) in query.iter_mut(){
 		if let Some(mut border)=border{
