@@ -13,8 +13,7 @@ use collidenew::Shape;
 use collidenew::CollisionInfo;
 
 
-#[derive(Component, Deref, DerefMut)]
-struct CreditTimer(Timer);
+
 #[derive(Component)]
 struct Size{
 	size: Vec2,
@@ -49,6 +48,7 @@ enum GameState{
 	InGame,
 	Paused,
 	Rover,
+	Ending,
 }
 mod rover;
 use rover::RoverPlugin;
@@ -56,6 +56,8 @@ mod ui;
 use ui::UiPlugin;
 mod physics;
 use physics::PhysicsPlugin;
+mod shared_styles;
+
 
 fn main() {
 	App::new()
@@ -72,23 +74,15 @@ fn main() {
 		.add_plugin(RoverPlugin)
 		.add_plugin(UiPlugin)
 		.add_plugin(PhysicsPlugin)
-		//.add_system(roll_credits)
 		.run();
 }
 
 fn setup(mut commands: Commands, 
 	mut materials: ResMut<Assets<ColorMaterial>>, 
 	asset_server: Res<AssetServer>) {
-    let initial_offset: f32 = 640. + (1280.*3.);
+    
 	commands.spawn_bundle(Camera2dBundle::default());
-	/*commands
-		.spawn_bundle(SpriteBundle {
-			texture: asset_server.load("credit-sheet.png"),
-            transform: Transform::from_xyz(initial_offset, 0., 0.),
-			..default()
-		})
-        .insert(CreditTimer(Timer::from_seconds(5., true)));
-	*/
+	
 	let handy:Handle<Image> = asset_server.load("windows_xd.png");
 	commands.spawn().insert_bundle(SpriteBundle{
 		texture: handy,
@@ -226,18 +220,4 @@ fn setup(mut commands: Commands,
 		});*/
 
 }
-fn roll_credits(
-	time: Res<Time>,
-	mut popup: Query<(&mut CreditTimer, &mut Transform)>
-) {
-    let counter = -4480.;
-	for (mut timer, mut transform) in popup.iter_mut() {
-		timer.tick(time.delta());
-		if timer.just_finished() {
-			transform.translation.x -= 1280.;
-            if counter == transform.translation.x {timer.pause()}
-			info!("Moved to next");
-		}
-	}
 
-}

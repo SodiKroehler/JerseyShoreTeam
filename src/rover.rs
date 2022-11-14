@@ -5,6 +5,18 @@ use iyes_loopless::prelude::*;
 use stop_words;
 use super::GameState;
 
+
+//stuff for egui
+use bevy_inspector_egui::{InspectorPlugin, Inspectable};
+#[derive(Inspectable, Default)]
+struct Data {
+    should_render: bool,
+    text: String,
+    #[inspectable(min = 42.0, max = 100.0)]
+    size: f32,
+}
+use bevy_inspector_egui::WorldInspectorPlugin;
+// end stuff for egui
 pub struct RoverPlugin;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -42,8 +54,8 @@ struct LastChat{
 
 impl Plugin for RoverPlugin {
     fn build(&self, app: &mut App) {
-        app.
-            add_startup_system(setup_rover)
+        app
+            .add_startup_system(setup_rover)
             .add_loopless_state(RoverState::Listening)
             .add_enter_system(GameState::Rover, open_rover)
             .add_exit_system(GameState::Rover, close_rover)
@@ -56,12 +68,14 @@ impl Plugin for RoverPlugin {
                     .run_in_state(RoverState::Thinking))
             .add_enter_system(RoverState::Thinking, chat_update)
             .add_enter_system(RoverState::Talking, chat_update)
-            .add_system(debug_current_state)
+            //.add_system(debug_current_state)
+            //.add_plugin(InspectorPlugin::<Data>::new())
+            .add_plugin(WorldInspectorPlugin::new())
             .add_system(
                 TEMP_move_to_talking
                     .run_in_state(RoverState::Talking))    
             .insert_resource(LastChat {name : "Rover:".to_string(),
-                                        val : "eat shit".to_string()});
+                                        val : "".to_string()});
     }
 }
 
@@ -71,30 +85,35 @@ fn setup_rover(mut commands: Commands, asset_server: Res<AssetServer>) {
     //   //  .insert(SpeechState::Talking);
 }   
 
-fn debug_current_state(state: Res<CurrentState<GameState>>,
-                        rstate: Res<CurrentState<RoverState>>) {
-    if state.is_changed() {
-        println!("Detected state change to {:?}!", state);
-    }
-    if rstate.is_changed() {
-        println!("Detected state change to {:?}!", rstate);
-    }
-}
+// fn debug_current_state(state: Res<CurrentState<GameState>>,
+//                         rstate: Res<CurrentState<RoverState>>) {
+//     match *state {
+//         GameState::InGame => {
+//             info!("ingame");
+//         }
+//         _ => {
+//             info!("somfin else");
+//         }
+//     }
+//     // if rstate.is_changed() {
+//     //     println!("Detected state change to {:?}!", rstate);
+//     // }
+// }
 
 fn TEMP_move_to_talking(mut commands: Commands, mut msg: ResMut<LastChat>) {
     commands.insert_resource(NextState(RoverState::Listening));
     msg.val = "".to_owned();
+    
 }
 
 fn chat_update(
     mut commands: Commands, 
     asset_server: Res<AssetServer>,
     //tquery: Query<Entity, With<chatMessage>>,
-    mut c_child: Query<&mut Text, (With<Parent>, With<chatMessage>)>,
-    mut c_parent: Query<Entity, (With<chatParent>, With<Children>)>,
+    c_child: Query<&mut Text, (With<Parent>, With<chatMessage>)>,
+    c_parent: Query<Entity, (With<chatParent>, With<Children>)>,
     sp: Res<LastChat>){
-        let current_speaker = &sp.name;   
-        let mut counter = 25.0;   
+        let current_speaker = &sp.name;     
         let newmsg = commands.spawn_bundle(
             TextBundle::from_sections([
                 TextSection::new(
@@ -116,23 +135,8 @@ fn chat_update(
             ])).insert(chatMessage)
                 .id();
 
-        for mut child_transform in c_child.iter_mut() {
-            counter+=25.0;
-           // child_transform.sections[0].style.position.bottom += counter;
-           // child_transform.sections[1].style.position.bottom += counter;
-            // `parent` contains the Entity ID we can use
-            // to query components from the parent:
-            //let parent_ = q_parent.get(parent.get());
-           // *child_transform = Transform::from_xyz(0.0,-25.0,1.0);
-          // child_transform.translation.y += counter;
-          // info!("transform now: {}", child_transform.translation.y);
-        }
-
-        // for rtext in tquery.iter(){
         let big_parent = c_parent.single();
         commands.entity(big_parent).push_children(&[newmsg]);
-        // rtext.sections[1].value = sp.val.to_string();
-        //commands.entity(newmsg).  sections[1].value = sp.val;
         
    
 }
@@ -141,25 +145,26 @@ fn open_rover(
     mut commands: Commands, 
     asset_server: Res<AssetServer>){
 
-        //let sizeOfChatBox = Size::new(Val::Px(100.0), Val::Px(100.0));
-
-        commands.spawn_bundle(
-            TextBundle::from_sections([
-                TextSection::new(
-                    "",
-                    TextStyle {
-                        font: asset_server.load("Jersey.ttf"),
-                        font_size: 20.0,
-                        color: Color::WHITE,
-                    },
-                ),
-            ])).insert(userInput);
         
-
-
-            let big_parent = commands.spawn_bundle(
-                TextBundle::from_sections([
-                    TextSection::new(
+           
+        commands.spawn_bundle(
+            NodeBundle{
+                color: Color::rgb(0.0, 0.0, 0.15).into(),
+                style: Style {
+                    size: Size::new(Val::Px(200.0), Val::Px(25.0)),
+                    padding: UiRect {
+                        left: Val::Px(0.0),
+                        right: Val::Px(100.0),
+                        top: Val::Px(5.0),
+                        bottom: Val::Px(5.0),
+                    },
+                    ..default()
+                },
+                ..default()
+            }
+        ).with_children(|parent| {
+            parent.spawn_bundle(
+                TextBundle::from_section(
                         "",
                         TextStyle {
                             font: asset_server.load("Jersey.ttf"),
@@ -167,20 +172,40 @@ fn open_rover(
                             color: Color::WHITE,
                         },
                     ),
-                ]).with_style(Style {
-                        align_items: AlignItems::FlexEnd,
-                        justify_content: JustifyContent::FlexStart,
-                        flex_basis: Val::Px(50.0),
-                        overflow: Overflow::Hidden,
-                        flex_direction: FlexDirection::ColumnReverse,
-                        position_type: PositionType::Absolute,
-                        position: UiRect {
-                            bottom: Val::Px(25.0),
-                            left: Val::Px(0.0),
+            );
+        }).insert(userInput);
+        
+
+
+            let big_parent = commands.spawn_bundle(
+                    NodeBundle{ 
+                        color: Color::rgb(0.0, 0.0, 0.15).into(),
+                        style: Style {
+                            align_items: AlignItems::FlexStart,
+                            justify_content: JustifyContent::FlexEnd,
+                            flex_basis: Val::Px(50.0),
+                            overflow: Overflow::Hidden,
+                            flex_direction: FlexDirection::ColumnReverse,
+                            position_type: PositionType::Absolute,
+                            flex_wrap: FlexWrap::Wrap,
+                            flex_grow: 100.0,
+                            padding: UiRect {
+                                left: Val::Px(0.0),
+                                right: Val::Px(100.0),
+                                top: Val::Px(5.0),
+                                bottom: Val::Px(5.0),
+                            },
+                            min_size: Size::new(Val::Px(100.0), Val::Px(50.0)),
+                            max_size: Size::new(Val::Px(100.0), Val::Px(500.0)),
+                            position: UiRect {
+                                bottom: Val::Px(25.0),
+                                left: Val::Px(0.0),
+                                ..default()
+                            },
                             ..default()
                         },
                         ..default()
-                })).insert(chatParent)
+                }).insert(chatParent)
                 .id();
 
         let current_speaker = "Rover:";
@@ -217,7 +242,7 @@ fn open_rover(
     }
 
 fn close_rover(mut commands: Commands, 
-    query: Query<Entity, With<chatMessage>>,
+    query: Query<Entity, With<chatParent>>,
     rov_query: Query<Entity, With<roverSprite>>,
     usr_input_query: Query<Entity, With<userInput>>){
         for rv in rov_query.iter() {
@@ -239,25 +264,39 @@ fn text_input(
     mut char_evr: EventReader<ReceivedCharacter>,
     keys: Res<Input<KeyCode>>,
     mut msg: ResMut<LastChat>,
-    mut userText: Query<&mut Text, With<userInput>>,) {
+    user_text: Query<(Entity, &Children),(With<userInput>)>,
+    mut text_query: Query<&mut Text>,) {
 
-        let mut userText = userText.single_mut();
+        let (user_text_node, user_text_kids) = user_text.single();
+        let mut user_text = text_query.get_mut(user_text_kids[0]).unwrap();
 
         //let mut k_input :String = "".to_owned();
 
         for ev in char_evr.iter() {
             msg.val.push(ev.char);
-            userText.sections[0].value = format!("{}{}", userText.sections[0].value, ev.char);
+            // user_text.sections[0].value = format!("{}{}", user_text.sections[0].value, ev.char);
+            user_text.sections[0].value.push(ev.char);
             
         }
         if keys.just_pressed(KeyCode::Return) {      
-            userText.sections[0].value = format!("");
-            //msg.val = format!("{}", input);
-            msg.name = "root: ".to_owned();
-            //.clear();
+            user_text.sections[0].value = format!("");
+            msg.name = String::from("Root: ");
             commands.insert_resource(NextState(RoverState::Thinking));
         }
-        
+
+        if keys.just_pressed(KeyCode::Back) {      
+            let mut this_crap_thing = msg.val.clone().to_string();
+            // this_crap_thing.pop();
+            // this_crap_thing.pop();
+            // this_crap_thing.push('\0');
+            // user_text.sections[0].value = this_crap_thing.clone();
+            let mut last_i = msg.val.len();
+            last_i -=1;
+            user_text.sections[0].value.remove(last_i);
+           // info!("{:?}", user_text.sections[0].value);
+            msg.val.remove(last_i);
+           // info!("{:?}",this_crap_thing);
+        }
 
         if keys.just_pressed(KeyCode::Escape) {
             commands.insert_resource(NextState(RoverState::Inactive));
@@ -290,7 +329,7 @@ fn parser(input: &str) ->Vec<String> {
     strings
 }
 
-fn stemmer(mut strings: Vec<String>) ->Vec<String>  {
+fn stemmer(strings: Vec<String>) ->Vec<String>  {
     let mut new_strings=Vec::new();
     let stopwords = stop_words::get("english");
     let en_stemmer = Stemmer::create(Algorithm::English);
