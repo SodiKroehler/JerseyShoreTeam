@@ -101,7 +101,7 @@ fn run_collisions(//first object is colliding into second
 		const X_MAX_VEL: f32 = 100.0;
 		const Y_MAX_VEL: f32 = 100.0;
 		const RESTITUTION: f32 = 0.45;
-		const CUTOFF: f32 = 60.0;
+		const FRAMERATE: f32 = 1.0/60.0;
 		let c = sat(&*shape1,&*shape2);
 		if c.is_some(){//if collision
 			if let Some(player1) = player1{
@@ -208,10 +208,10 @@ fn run_collisions(//first object is colliding into second
 			phys2.delta_x *= RESTITUTION;
 			phys1.delta_y *= RESTITUTION;
 			phys2.delta_y *= RESTITUTION;
-			translation1.x += time.delta_seconds()*phys1.delta_x;
-			translation1.y += time.delta_seconds()*phys1.delta_y;
-			translation2.x += time.delta_seconds()*phys2.delta_x;
-			translation2.y += time.delta_seconds()*phys2.delta_y;
+			translation1.x += FRAMERATE*phys1.delta_x;
+			translation1.y += FRAMERATE*phys1.delta_y;
+			translation2.x += FRAMERATE*phys2.delta_x;
+			translation2.y += FRAMERATE*phys2.delta_y;
 			
 			phys1.delta_x = phys1.delta_x.clamp(-X_MAX_VEL, X_MAX_VEL);
 			phys2.delta_x = phys2.delta_x.clamp(-X_MAX_VEL, X_MAX_VEL);
@@ -360,10 +360,10 @@ fn move_everything(
 	mut query: Query<(&mut Physics, &Size, &mut Transform, &mut Shape, Option<&mut Player>, Option<&Recycle>, Option<&Folder>, Option<&Border>)>,
 ){
 	const FRAMERATE: f32 = 1.0/60.0;
-	const X_ACCEL: f32 = 25.0;
-	const X_MAX_VEL: f32 = 100.0;
+	const X_ACCEL: f32 = 30.0;
+	const X_MAX_VEL: f32 = 300.0;
 	const GRAV: f32 = 10.0;
-	const Y_ACCEL: f32 = 250.0;
+	const Y_ACCEL: f32 = 550.0;
 	const FRICTION_SCALE: f32 = 0.75;
 	for (mut phys, object, mut transform, mut shape, mut player, recycle, folder, border) in query.iter_mut(){
 		if let Some(mut border)=border{

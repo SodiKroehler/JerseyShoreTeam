@@ -118,7 +118,7 @@ fn setup(mut commands: Commands,
 	commands.spawn()
 		.insert_bundle(SpriteBundle{
 		texture: asset_server.load("recycle_bin1.png"),
-		transform: Transform::from_xyz(-590.0,320.0,1.0),
+		transform: Transform::from_xyz(-540.0,270.0,1.0),
 		..default()
 		}).insert(Size{
 			size: Vec2{
@@ -134,7 +134,7 @@ fn setup(mut commands: Commands,
 			gravity:0.0,
 		}).insert(Shape{
 			vertices: vec![Vec3::new(-18.5,21.5,0.0),Vec3::new(18.5,21.5,0.0),Vec3::new(15.5,-21.5,0.0),Vec3::new(-15.5,-21.5,0.0)],
-			origin: Vec3::new(-590.0,320.0,1.0),//needs to be same as starting transform
+			origin: Vec3::new(-540.0,270.0,1.0),//needs to be same as starting transform
 		});
 	commands.spawn()
 		.insert_bundle(SpriteBundle{
