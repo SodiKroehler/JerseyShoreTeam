@@ -32,7 +32,7 @@ impl Plugin for PhysicsPlugin{
  	
  	app
  		.add_fixed_timestep(
- 			Duration::from_millis(33),
+ 			Duration::from_millis(17),
  			"physics_update",
  		)
  		.add_event::<FolderSpawnEvent>()
@@ -359,6 +359,7 @@ fn move_everything(
 	keyboard_input: Res<Input<KeyCode>>,
 	mut query: Query<(&mut Physics, &Size, &mut Transform, &mut Shape, Option<&mut Player>, Option<&Recycle>, Option<&Folder>, Option<&Border>)>,
 ){
+	const FRAMERATE: f32 = 1.0/60.0;
 	const X_ACCEL: f32 = 25.0;
 	const X_MAX_VEL: f32 = 100.0;
 	const GRAV: f32 = 10.0;
@@ -412,8 +413,8 @@ fn move_everything(
 		
 		
 		phys.delta_x = phys.delta_x.clamp(-X_MAX_VEL, X_MAX_VEL);
-		translation.x += time.delta_seconds()*phys.delta_x;
-		translation.y += time.delta_seconds()*phys.delta_y;
+		translation.x += FRAMERATE*phys.delta_x;
+		translation.y += FRAMERATE*phys.delta_y;
 		
 		phys.delta_x *= FRICTION_SCALE;
 		*translation = inbounds(*translation, object.size);
