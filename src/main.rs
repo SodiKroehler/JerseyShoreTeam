@@ -35,6 +35,7 @@ struct Border{}
 struct Physics{
 	delta_x: f32,
 	delta_y: f32,
+	delta_omega: f32,
 	gravity: f32,
 }
 
@@ -109,6 +110,7 @@ fn setup(mut commands: Commands,
 		}).insert(Physics{
 			delta_x:0.0,
 			delta_y:0.0,
+			delta_omega:0.0,
 			gravity:1.0,
 		}).insert(Shape{
 			vertices: vec![Vec3::new(-15.0,25.0,0.0),Vec3::new(15.0,25.0,0.0),Vec3::new(15.0,-25.0,0.0),Vec3::new(-15.0,-25.0,0.0)],
@@ -131,6 +133,7 @@ fn setup(mut commands: Commands,
 		.insert(Physics{
 			delta_x:0.0,
 			delta_y:0.0,
+			delta_omega:0.0,
 			gravity:0.0,
 		}).insert(Shape{
 			vertices: vec![Vec3::new(-18.5,21.5,0.0),Vec3::new(18.5,21.5,0.0),Vec3::new(15.5,-21.5,0.0),Vec3::new(-15.5,-21.5,0.0)],
