@@ -28,6 +28,10 @@ struct Player{
 #[derive(Component)]
 struct Folder{}
 #[derive(Component)]
+struct Ball{}
+#[derive(Component)]
+struct Background{}
+#[derive(Component)]
 struct RigidFolder{}
 #[derive(Component)]
 struct Border{}
@@ -46,6 +50,7 @@ static SCREEN_HEIGHT:f32 = 720.0;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum GameState{
 	InGame,
+	Pinball,
 }
 //mod rover;
 //use rover::RoverPlugin;
