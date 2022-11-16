@@ -12,6 +12,7 @@ mod collidenew;
 use collidenew::Shape;
 use collidenew::CollisionInfo;
 
+
 #[derive(Component, Deref, DerefMut)]
 struct CreditTimer(Timer);
 #[derive(Component)]
@@ -47,15 +48,18 @@ struct Physics{
 struct Recycle{}
 static SCREEN_WIDTH:f32 = 1280.0;
 static SCREEN_HEIGHT:f32 = 720.0;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum GameState{
 	InGame,
 	Pinball,
+	Paused,
+	Rover,
 }
-//mod rover;
-//use rover::RoverPlugin;
-//mod ui;
-//use ui::UiPlugin;
+mod rover;
+use rover::RoverPlugin;
+mod ui;
+use ui::UiPlugin;
 mod physics;
 use physics::PhysicsPlugin;
 
@@ -71,8 +75,8 @@ fn main() {
 		.add_loopless_state(GameState::InGame)
 		.add_plugins(DefaultPlugins)
 		.add_startup_system(setup)
-		//.add_plugin(RoverPlugin)
-		//.add_plugin(UiPlugin)
+		.add_plugin(RoverPlugin)
+		.add_plugin(UiPlugin)
 		.add_plugin(PhysicsPlugin)
 		//.add_system(roll_credits)
 		.run();
@@ -178,7 +182,8 @@ fn setup(mut commands: Commands,
 			size: Vec2{
 				x:37.0,
 				y:32.0,
-			}
+
+}
 		});
 	commands.spawn()
 		.insert_bundle(SpriteBundle{

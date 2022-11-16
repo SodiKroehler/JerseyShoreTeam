@@ -1,35 +1,26 @@
 use bevy::{prelude::*};
+use super::GameState;
+use iyes_loopless::prelude::*;
 
 pub struct UiPlugin;
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(setup_ui);
+        app
+      // .add_startup_system(setup_ui)
+        .add_system(
+            processTriggers
+                .run_in_state(GameState::InGame))
+        .add_system(processTriggers);
     }
 }
 
-fn despawn_gui(mut commands: Commands, button_query: Query<Entity, With<Button>>) {
-    for ent in button_query.iter() {
-        commands.entity(ent).despawn_recursive();
+fn processTriggers(mut commands: Commands, kbd: Res<Input<KeyCode>>) {
+    // if kbd.just_pressed(KeyCode::Escape) {
+    //     commands.insert_resource(NextState(GameState::Paused));
+    // }
+    if kbd.just_pressed(KeyCode::B) {
+        commands.insert_resource(NextState(GameState::Rover));
+        return;
     }
 }
-
-fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
-    //commands.spawn_bundle(Camera2dBundle::default());
-    commands.spawn_bundle(
-        TextBundle::from_section(
-            "hello\nbevy!",
-            TextStyle {
-                font: asset_server.load("Jersey.ttf"),
-                font_size: 100.0,
-                color: Color::WHITE,
-            },
-        ) 
-       // .with_text_alignment(TextAlignment::TOP_CENTER)
-        .with_style(Style {
-            margin: UiRect::all(Val::Px(5.0)),
-            ..default()
-        }),
-    );
-}
-
