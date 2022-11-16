@@ -89,7 +89,7 @@ fn inbounds(trans : Vec3, size : Vec2)->Vec3{
 fn run_collisions(//first object is colliding into second
 	time: Res<Time>,
 	mut ev_spawnfolder : EventWriter<FolderSpawnEvent>,
-	mut obj_list: Query<(&Size, &mut Transform, &mut Physics, &mut Shape, Option<&Player>, Option<&Recycle>, Option<&Folder>, /*Option<&Border>*/)>,
+	mut obj_list: Query<(&Size, &mut Transform, &mut Physics, &mut Shape, Option<&Player>, Option<&Recycle>, Option<&Folder>)>,
 ){
 	let mut obj_pairs = obj_list.iter_combinations_mut();
 	while let Some([(object1, mut transform1, mut phys1, mut shape1, player1, recycle1, folder1), (object2, mut transform2, mut phys2, mut shape2, player2, recycle2, folder2)]) = obj_pairs.fetch_next(){
@@ -101,8 +101,7 @@ fn run_collisions(//first object is colliding into second
 		const LAUNCH: f32 = 4.0;
 		const X_MAX_VEL: f32 = 100.0;
 		const Y_MAX_VEL: f32 = 100.0;
-		const RESTITUTION: f32 = 0.45;
-		const ROTATE_LAUNCH: f32 = 2.0;
+		const ROTATE_LAUNCH: f32 =0.5;
 		const FRAMERATE: f32 = 1.0/60.0;
 		let c = sat(&*shape1,&*shape2);
 		if c.is_some(){//if collision
@@ -127,73 +126,102 @@ fn run_collisions(//first object is colliding into second
 				}
 			}
 			/*if let Some(folder1) = folder1{
+				
+				
 				if let Some(border2) = border2{
-					info!("amogus");
-					let norm_c = c.unwrap().vector.normalize_or_zero();
+					//info!("amogus1");
+					let collision = c.unwrap();
+					let norm_c = collision.vector.normalize_or_zero();
 					let norm_p1 = Vec2::new(phys1.delta_x,phys1.delta_y).normalize_or_zero();
 					let norm_p2 = Vec2::new(phys2.delta_x,phys2.delta_y).normalize_or_zero();
 					let norm_total = (norm_p1+norm_p2).normalize_or_zero();
 					let angle_rad = norm_c.angle_between(norm_total)/2.0;
 					let angle = (90.0/std::f32::consts::PI)*norm_c.angle_between(norm_total);
 					//info!("angle: {}", angle);
-					phys1.delta_x+=norm_c.x*LAUNCH;
-					phys1.delta_y+=norm_c.y*LAUNCH;
-					phys1.delta_x *= RESTITUTION;
-					phys1.delta_y *= RESTITUTION;
-					translation1.x += time.delta_seconds()*phys1.delta_x;
-					translation1.y += time.delta_seconds()*phys1.delta_y;
+					
+					let separation = collision.separation;
+					translation1.x += separation.x;
+					translation1.y += separation.y;
 					
 					phys1.delta_x = phys1.delta_x.clamp(-X_MAX_VEL, X_MAX_VEL);
 					phys1.delta_y = phys1.delta_y.clamp(-Y_MAX_VEL, Y_MAX_VEL);
 					*translation1 = inbounds(*translation1, object1.size);
 					shape1.origin = *translation1;
-					if !angle.is_nan() && angle.abs()!=90.0 && angle.abs()!=0.0{
-						let temp_shape = rotate(&mut shape1,angle);
-						shape1.vertices = temp_shape.vertices.clone();
-						//info!("player b4 trans x:{} y:{}",translation2.x.clone(),translation2.y.clone());
-						transform1.rotate_local_z(angle_rad);
-					}
 					continue;
 				}
 				else{
-					continue;
-				}
-			}
-			if let Some(border1) = border1{
-				if let Some(folder2) = folder2{
-					info!("amogus");
-					let norm_c = c.unwrap().vector.normalize_or_zero();
+					
+					let c_vec = c.unwrap().vector;
+					let norm_c = c_vec.normalize_or_zero();
 					let norm_p1 = Vec2::new(phys1.delta_x,phys1.delta_y).normalize_or_zero();
 					let norm_p2 = Vec2::new(phys2.delta_x,phys2.delta_y).normalize_or_zero();
 					let norm_total = (norm_p1+norm_p2).normalize_or_zero();
 					let angle_rad = norm_c.angle_between(norm_total)/2.0;
 					let angle = (90.0/std::f32::consts::PI)*norm_c.angle_between(norm_total);
 					//info!("angle: {}", angle);
-					phys2.delta_x+=norm_c.x*LAUNCH;
-					phys2.delta_y+=norm_c.y*LAUNCH;
-					phys2.delta_x *= RESTITUTION;
-					phys2.delta_y *= RESTITUTION;
-					translation2.x += time.delta_seconds()*phys2.delta_x;
-					translation2.y += time.delta_seconds()*phys2.delta_y;
+					phys1.delta_x+=phys2.delta_x.abs()*LAUNCH*norm_c.x;
+					phys1.delta_y+=phys2.delta_y.abs()*LAUNCH*norm_c.y;
+					phys2.delta_x-=phys1.delta_x.abs()*LAUNCH*norm_c.x;
+					phys2.delta_y-=phys1.delta_y.abs()*LAUNCH*norm_c.y;
+					translation1.x += FRAMERATE*phys1.delta_x;
+					translation1.y += FRAMERATE*phys1.delta_y;
+					translation2.x += FRAMERATE*phys2.delta_x;
+					translation2.y += FRAMERATE*phys2.delta_y;
+					
+					phys1.delta_x = phys1.delta_x.clamp(-X_MAX_VEL, X_MAX_VEL);
+					phys2.delta_x = phys2.delta_x.clamp(-X_MAX_VEL, X_MAX_VEL);
+					phys1.delta_y = phys1.delta_y.clamp(-Y_MAX_VEL, Y_MAX_VEL);
+					phys2.delta_y = phys2.delta_y.clamp(-Y_MAX_VEL, Y_MAX_VEL);
+					
+					*translation1 = inbounds(*translation1, object1.size);
+					*translation2 = inbounds(*translation2, object2.size);
+					
+					shape1.origin = *translation1;
+					shape2.origin = *translation2;
+					if !angle.is_nan() && angle.abs()!=90.0 && angle.abs()!=0.0{
+						phys2.delta_omega += (phys1.delta_x.powi(2)+phys1.delta_y.powi(2)).sqrt()*angle_rad*ROTATE_LAUNCH;
+						
+					}
+					let temp_shape = rotate(&mut shape2,((90.0/std::f32::consts::PI)*phys2.delta_omega)%360.0);
+					shape2.vertices = temp_shape.vertices.clone();
+					//info!("player b4 trans x:{} y:{}",translation2.x.clone(),translation2.y.clone());
+					transform2.rotate_local_z(phys2.delta_omega);
+					phys2.delta_omega *= 0.9;
+					continue;
+				}
+
+			}
+			if let Some(border1) = border1{
+				if let Some(folder2) = folder2{
+					//info!("amogus2");
+					let collision = c.unwrap();
+					let norm_c = collision.vector.normalize_or_zero();
+					let norm_p1 = Vec2::new(phys1.delta_x,phys1.delta_y).normalize_or_zero();
+					let norm_p2 = Vec2::new(phys2.delta_x,phys2.delta_y).normalize_or_zero();
+					let norm_total = (norm_p1+norm_p2).normalize_or_zero();
+					let angle_rad = norm_c.angle_between(norm_total)/2.0;
+					let angle = (90.0/std::f32::consts::PI)*norm_c.angle_between(norm_total);
+					//info!("angle: {}", angle);
+
+					let separation = collision.separation;
+					translation2.x -= separation.x;
+					translation2.y -= separation.y;
 					
 					phys2.delta_x = phys2.delta_x.clamp(-X_MAX_VEL, X_MAX_VEL);
 					phys2.delta_y = phys2.delta_y.clamp(-Y_MAX_VEL, Y_MAX_VEL);
 					*translation2 = inbounds(*translation2, object2.size);
 					shape2.origin = *translation2;
-					if !angle.is_nan() && angle.abs()!=90.0 && angle.abs()!=0.0{
-						let temp_shape = rotate(&mut shape2,angle);
-						shape2.vertices = temp_shape.vertices.clone();
-						//info!("player b4 trans x:{} y:{}",translation2.x.clone(),translation2.y.clone());
-						transform2.rotate_local_z(angle_rad);
-					}
+
 					continue;
 				}
 				
 			}
 			else{
 				continue;
+			}
+			if let Some(folder1) = folder1{
+				info!("jizz2");
 			}*/
-
 			//info!("collide");
 			let c_vec = c.unwrap().vector;
 			let norm_c = c_vec.normalize_or_zero();
@@ -226,13 +254,14 @@ fn run_collisions(//first object is colliding into second
 				phys2.delta_omega += (phys1.delta_x.powi(2)+phys1.delta_y.powi(2)).sqrt()*angle_rad*ROTATE_LAUNCH;
 				
 			}
-			let temp_shape = rotate(&mut shape2,((90.0/std::f32::consts::PI)*phys2.delta_omega)%360.0);
+			/*let temp_shape = rotate(&mut shape2,((90.0/std::f32::consts::PI)*phys2.delta_omega)%360.0);
 			shape2.vertices = temp_shape.vertices.clone();
 			//info!("player b4 trans x:{} y:{}",translation2.x.clone(),translation2.y.clone());
+			info!("omega: {}", phys2.delta_omega);
 			transform2.rotate_local_z(phys2.delta_omega);
-			phys2.delta_omega *= 0.9;
+			phys2.delta_omega *= 0.75;*/
 			
-			return;
+			
 		}
 		/*else{
 			//info!("no collide");
@@ -296,7 +325,8 @@ fn move_everything(
 		if let Some(mut border)=border{
 			continue;
 		}
-		let translation = &mut transform.translation;
+		//let translation = &mut transform.translation;
+		
 		//accelerate in horizontal
 		
 		if let Some(mut player)=player{
@@ -321,7 +351,7 @@ fn move_everything(
 				jumping = 1.0;
 				//info!("jump");
 			}
-			if translation.y <= -335.0{
+			if transform.translation.y <= -335.0{
 				collision_check.is_grounded=true;
 			}
 			if collision_check.is_grounded{//note: need to replace this with a function that checks for grounded for all physics entities
@@ -333,19 +363,26 @@ fn move_everything(
 		}
 		else{
 			phys.delta_y -= GRAV * phys.gravity;
-			if translation.y <= (-1.0*SCREEN_HEIGHT/2.0) +(object.size.y/2.0){
+			if transform.translation.y <= (-1.0*SCREEN_HEIGHT/2.0) +(object.size.y/2.0){
 				phys.delta_y = 0.0;
 			}
+			let temp_shape = rotate(&mut shape,((90.0/std::f32::consts::PI)*phys.delta_omega)%360.0);
+			shape.vertices = temp_shape.vertices.clone();
+			//info!("player b4 trans x:{} y:{}",translation2.x.clone(),translation2.y.clone());
+			//info!("omega: {}", phys.delta_omega);
+			transform.rotate_local_z(phys.delta_omega);
+			phys.delta_omega *= 0.75;
 		}
 		
 		
 		phys.delta_x = phys.delta_x.clamp(-X_MAX_VEL, X_MAX_VEL);
-		translation.x += FRAMERATE*phys.delta_x;
-		translation.y += FRAMERATE*phys.delta_y;
+		transform.translation.x += FRAMERATE*phys.delta_x;
+		transform.translation.y += FRAMERATE*phys.delta_y;
 		
 		phys.delta_x *= FRICTION_SCALE;
-		*translation = inbounds(*translation, object.size);
-		shape.origin = *translation;
+		transform.translation = inbounds(transform.translation, object.size);
+		shape.origin = transform.translation;
+		
 	}
 }
  

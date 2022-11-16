@@ -13,7 +13,7 @@ pub struct CollisionInfo {
     pub vector: Vec2,
     pub contain_a: bool,
     pub contain_b: bool,
-    pub seperation: Vec2,
+    pub separation: Vec2,
 }
 
 #[derive(Component)]
@@ -108,7 +108,7 @@ pub fn sat(shape_a: &Shape, shape_b: &Shape) -> Option<CollisionInfo> {
         vector: Vec2 { x: 0.0, y: 0.0 },
         contain_a: true,
         contain_b: true,
-        seperation: Vec2 { x: 0.0, y: 0.0 },
+        separation: Vec2 { x: 0.0, y: 0.0 },
     };
 
     for a in a_vertices.iter() {
@@ -174,7 +174,7 @@ pub fn sat(shape_a: &Shape, shape_b: &Shape) -> Option<CollisionInfo> {
         }
     }
 
-    col.seperation = Vec2 {
+    col.separation = Vec2 {
         //how to get the shape outside
         x: col.vector.x * col.distance,
         y: col.vector.y * col.distance,

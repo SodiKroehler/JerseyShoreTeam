@@ -200,6 +200,7 @@ fn setup(mut commands: Commands,
 		}).insert(Physics{
 			delta_x:0.0,
 			delta_y:0.0,
+			delta_omega:0.0,
 			gravity:0.0,
 		}).insert(Shape{
 			vertices: vec![Vec3::new(-650.0,25.0,0.0),Vec3::new(650.0,25.0,0.0),Vec3::new(650.0,-25.0,0.0),Vec3::new(-650.0,-25.0,0.0)],
@@ -218,6 +219,7 @@ fn setup(mut commands: Commands,
 		}).insert(Physics{
 			delta_x:0.0,
 			delta_y:0.0,
+			delta_omega:0.0,
 			gravity:0.0,
 		}).insert(Shape{
 			vertices: vec![Vec3::new(-650.0,25.0,0.0),Vec3::new(650.0,25.0,0.0),Vec3::new(650.0,-25.0,0.0),Vec3::new(-650.0,-25.0,0.0)],
