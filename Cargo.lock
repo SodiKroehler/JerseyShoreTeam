@@ -1585,6 +1585,8 @@ dependencies = [
  "bevy-inspector-egui",
  "iyes_loopless",
  "rust-stemmers",
+ "serde",
+ "serde_json",
  "stop-words",
 ]
 

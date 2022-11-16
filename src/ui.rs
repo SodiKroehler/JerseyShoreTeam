@@ -19,6 +19,7 @@ impl Plugin for UiPlugin {
         .add_system (
             process_triggers
                 .run_in_state(GameState::InGame))
+        .add_enter_system(GameState::InGame, spawn_xp_ui_elems)
         .add_enter_system(GameState::Ending, setup_credits)
         .add_system (roll_credits.run_in_state(GameState::Ending))
         .add_exit_system(GameState::Ending, exit_credits)
@@ -26,6 +27,10 @@ impl Plugin for UiPlugin {
         .add_system(pause_button.run_in_state(GameState::Paused))
         .add_exit_system(GameState::Paused, exit_paused);
     }
+}
+
+fn spawn_xp_ui_elems(mut commands: Commands){
+
 }
 
 fn process_triggers(mut commands: Commands, kbd: Res<Input<KeyCode>>) {
@@ -57,14 +62,15 @@ fn roll_credits(
     mut commands: Commands,
 	mut popup: Query<(&mut CreditTimer, &mut Transform)>) {
 
-    let counter = -4800;
+    let counter = -4800.0;
 	for (mut timer, mut transform) in popup.iter_mut() {
 		timer.tick(time.delta());
 		if timer.just_finished() {
 			transform.translation.x -= 1280.;
             // if counter == transform.translation.x {
-            if counter == -4800 {
+            if counter == -4800.0 {
                 timer.pause();
+                //exit.send(AppExit);
                 commands.insert_resource(NextState(GameState::Paused));
             }
 		}
@@ -83,7 +89,7 @@ fn enter_paused(mut commands: Commands,
                 asset_server: Res<AssetServer>){
 
     commands.spawn_bundle(NodeBundle{
-        transform: Transform::from_xyz(0.0,0.0,1.0),
+        transform: Transform::from_xyz(0.0,0.0,4.0),
         style: Style {
             size: Size::new(Val::Px(1280.0), Val::Px(720.0)),
             ..default()
@@ -92,7 +98,7 @@ fn enter_paused(mut commands: Commands,
         ..default()
     }).with_children(|parent| {
         parent.spawn_bundle(ButtonBundle {
-            transform: Transform::from_xyz(0.0,0.0,4.0),
+            transform: Transform::from_xyz(0.0,0.0,5.0),
             style: Style {
                 size: Size::new(Val::Px(150.0), Val::Px(65.0)),
                 margin: UiRect::all(Val::Auto),

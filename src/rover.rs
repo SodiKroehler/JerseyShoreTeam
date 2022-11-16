@@ -1,9 +1,13 @@
 extern crate rust_stemmers;
+use bevy::utils::HashMap;
 use rust_stemmers::{Algorithm, Stemmer};
+use serde::{Deserialize, Serialize};
+use serde_json::Result;
 use bevy::prelude::*;
 use iyes_loopless::prelude::*;
 use stop_words;
 use super::GameState;
+use std::fs;
 
 
 //stuff for egui
@@ -49,6 +53,14 @@ struct LastChat{
     val: String,
 }
 
+#[derive(Serialize, Deserialize)]
+struct Question{
+    id: isize,
+    question: String,
+    // answer: String,
+    // vector: Vec<isize>,
+    // priority: isize,
+}
 
 
 
@@ -63,17 +75,17 @@ impl Plugin for RoverPlugin {
                 text_input
                     .run_in_state(GameState::Rover)
                     .run_in_state(RoverState::Listening))
-            .add_system(
-                get_rover_response
-                    .run_in_state(RoverState::Thinking))
+            // .add_system(
+            //     get_rover_response
+            //         .run_in_state(RoverState::Thinking))
+            .add_enter_system(RoverState::Thinking, get_rover_response)
             .add_enter_system(RoverState::Thinking, chat_update)
             .add_enter_system(RoverState::Talking, chat_update)
-            //.add_system(debug_current_state)
             //.add_plugin(InspectorPlugin::<Data>::new())
             .add_plugin(WorldInspectorPlugin::new())
-            .add_system(
-                TEMP_move_to_talking
-                    .run_in_state(RoverState::Talking))    
+            // .add_system(
+            //     TEMP_move_to_talking
+            //         .run_in_state(RoverState::Talking))    
             .insert_resource(LastChat {name : "Rover:".to_string(),
                                         val : "".to_string()});
     }
@@ -85,34 +97,39 @@ fn setup_rover(mut commands: Commands, asset_server: Res<AssetServer>) {
     //   //  .insert(SpeechState::Talking);
 }   
 
-// fn debug_current_state(state: Res<CurrentState<GameState>>,
-//                         rstate: Res<CurrentState<RoverState>>) {
-//     match *state {
-//         GameState::InGame => {
-//             info!("ingame");
-//         }
-//         _ => {
-//             info!("somfin else");
-//         }
-//     }
-//     // if rstate.is_changed() {
-//     //     println!("Detected state change to {:?}!", rstate);
-//     // }
-// }
+fn debug_current_state(state: Res<CurrentState<GameState>>,
+                        rstate: Res<CurrentState<RoverState>>) {
+    // match *state {
+    //     GameState::InGame => {
+    //         info!("ingame");
+    //     }
+    //     _ => {
+    //         info!("somfin else");
+    //     }
+    // }
+    if (format!("{rstate:?}") == "RoverState::Listening") {
+        info!("listening");
+    }
+
+    if rstate.is_changed() {
+        println!("Detected state change to {:?}!", rstate);
+    }
+}
 
 fn TEMP_move_to_talking(mut commands: Commands, mut msg: ResMut<LastChat>) {
-    commands.insert_resource(NextState(RoverState::Listening));
-    msg.val = "".to_owned();
+    // commands.insert_resource(NextState(RoverState::Listening));
+    // msg.val = "".to_owned();
     
 }
 
 fn chat_update(
     mut commands: Commands, 
     asset_server: Res<AssetServer>,
-    //tquery: Query<Entity, With<chatMessage>>,
+    rstate: Res<CurrentState<RoverState>>,
     c_child: Query<&mut Text, (With<Parent>, With<chatMessage>)>,
     c_parent: Query<Entity, (With<chatParent>, With<Children>)>,
-    sp: Res<LastChat>){
+    mut sp: ResMut<LastChat>){
+
         let current_speaker = &sp.name;     
         let newmsg = commands.spawn_bundle(
             TextBundle::from_sections([
@@ -137,7 +154,16 @@ fn chat_update(
 
         let big_parent = c_parent.single();
         commands.entity(big_parent).push_children(&[newmsg]);
-        
+
+        if (format!("{rstate:?}") == "RoverState::Thinking") {
+            //just came from listening, so outputting user msg
+            info!("thinking");
+        } else {
+            //is currently talking, so outputting rover
+            info!("{:?}", rstate);
+            commands.insert_resource(NextState(RoverState::Listening));
+            sp.val = "".to_owned();
+        }       
    
 }
 
@@ -188,14 +214,14 @@ fn open_rover(
                             flex_direction: FlexDirection::ColumnReverse,
                             position_type: PositionType::Absolute,
                             flex_wrap: FlexWrap::Wrap,
-                            flex_grow: 100.0,
+                            flex_grow: 10.0,
                             padding: UiRect {
                                 left: Val::Px(0.0),
                                 right: Val::Px(100.0),
                                 top: Val::Px(5.0),
                                 bottom: Val::Px(5.0),
                             },
-                            min_size: Size::new(Val::Px(100.0), Val::Px(50.0)),
+                            min_size: Size::new(Val::Px(10.0), Val::Px(50.0)),
                             max_size: Size::new(Val::Px(100.0), Val::Px(500.0)),
                             position: UiRect {
                                 bottom: Val::Px(25.0),
@@ -273,29 +299,22 @@ fn text_input(
         //let mut k_input :String = "".to_owned();
 
         for ev in char_evr.iter() {
-            msg.val.push(ev.char);
+            if (ev.char != '\u{8}') {msg.val.push(ev.char)};
             // user_text.sections[0].value = format!("{}{}", user_text.sections[0].value, ev.char);
-            user_text.sections[0].value.push(ev.char);
+            if (ev.char != '\u{8}') {user_text.sections[0].value.push(ev.char)};
             
         }
         if keys.just_pressed(KeyCode::Return) {      
             user_text.sections[0].value = format!("");
-            msg.name = String::from("Root: ");
+            msg.name.pop();
+            msg.name = String::from("User: ");
             commands.insert_resource(NextState(RoverState::Thinking));
         }
 
-        if keys.just_pressed(KeyCode::Back) {      
-            let mut this_crap_thing = msg.val.clone().to_string();
-            // this_crap_thing.pop();
-            // this_crap_thing.pop();
-            // this_crap_thing.push('\0');
-            // user_text.sections[0].value = this_crap_thing.clone();
-            let mut last_i = msg.val.len();
-            last_i -=1;
-            user_text.sections[0].value.remove(last_i);
-           // info!("{:?}", user_text.sections[0].value);
-            msg.val.remove(last_i);
-           // info!("{:?}",this_crap_thing);
+        if keys.just_pressed(KeyCode::Back) {  
+            user_text.sections[0].value.pop();
+            info!("{:?}", user_text.sections[0].value);
+            msg.val.pop();
         }
 
         if keys.just_pressed(KeyCode::Escape) {
@@ -307,20 +326,19 @@ fn text_input(
 
 fn get_rover_response(
     mut commands: Commands,
-    mut msg: ResMut<LastChat>,){
-
-    let tokens = parser(&(msg.val)[..]);
-    let stemmed_tokens = stemmer(tokens);
-    //println!("Stemmed parsed tokens:");
-    // for str in stemmed_tokens.iter() {
-    //     println!("{}", str);
-    // }
-    msg.val = "eat shit".to_owned();
-    msg.name = "rover:".to_owned();
+    mut msg: ResMut<LastChat>,
+    asset_server: Res<AssetServer>){
+    
+    let parsed = parser(msg.val.clone());
+    let stemmed = stemmer(parsed);
+    let indexed = indexer(stemmed);
+    let answer = answerer(indexed, asset_server);
+    msg.val = String::from("eat shit");
+    msg.name = "rover: ".to_owned();
     commands.insert_resource(NextState(RoverState::Talking));     
 }
 
-fn parser(input: &str) ->Vec<String> {
+fn parser(input: String) ->Vec<String> {
     let mut strings = Vec::new();
     let split = input.split(" ");
     for s in split {
@@ -341,11 +359,65 @@ fn stemmer(strings: Vec<String>) ->Vec<String>  {
     new_strings
 }
 
-// // fn answerer(int: procVal){
-// //     let mut tquery = Query<&mut Text, With<RoverText>>;
+fn indexer (toks: Vec<String>) -> Vec<isize> {
+    let mut indexes = Vec::new();
+    //let mut dict = TEMP_create_dictionary();
+    for t in toks.iter(){
+        indexes.push(1);
+    }
+    return indexes;
+}
 
-// //     for mut text in &mut tquery {
-// //         text.sections[1].value = format!("eat shit and die");
-// // }
-// // }
+fn answerer(idxs: Vec<isize>,
+            asset_server: Res<AssetServer> ) -> String{
+    let mut final_ans = String::from("");
+    for t in idxs.iter(){
+        final_ans += &t.to_string();
+        // final_ans += format!("[{:?}], ", t).to_string();
+    }
+    // let test_vec = r#"
+    // { 
+    //     [
+    //     {
+    //          "id": 1,
+    //          "question": "Who are you?",
+    //          "answer": "I am Rover, loyal companion and longtime resident of this computer!",
+    //          "vector": [0, 0, 0],
+    //          "priority": 1
+    //     },
+    //     {
+    //          "id": 2,
+    //          "question": "Where am I?",
+    //          "answer": "You're in a computer, of course.",
+    //          "vector": [0, 0, 0],
+    //          "priority": 1
+    //     },
+    // ]} "#;
+    // // let mut raw_qa_list = asset_server.load("questions_answers.json");
+    // // let raw_qa_list: String = fs::read_to_string("./assets/questions_answers.json").unwrap();
+    // // let qa_json: Vec<Question> = serde_json::from_str(&raw_qa_list).unwrap();
+    // let qa_json: Vec<Question> = serde_json::from_str(&test_vec)?;
+    // for p in qa_json.iter() {
+    //     info!("{:?}", p.question);
+    // }
+    return final_ans.to_string();
+}
+// "questionAnswerPair":
+// fn TEMP_create_dictionary() -> HashMap<T,T> {
+//    // let mut file = File::open("./assets/corpus.txt").expect("File not found");
+//     let mut data = fs.read_to_string("./assets/corpus.txt").expect("Error while reading file");
+//     data = data.replace(&['(', ')', ',', '"', '.', ';', ':', '\''][..], "");
+
+//     let corpus_tokens = parser(data);
+//     let mut corpus_map = HashMap::new();
+//     let mut i = 0;
+//     for corp_tok in corpus_tokens.iter(){
+//         let j = i;
+//         corpus_map.entry(corp_tok).or_insert(corp_tok);
+//         if j != i {
+//             i = i+1;
+//         }
+//     }
+//     return corpus_map;
+// }
 
