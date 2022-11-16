@@ -19,6 +19,8 @@ use super::Size;
 use super::FolderSpawnEvent;
 use super::Player;
 use super::Folder;
+use super::Ball;
+use super::Background;
 use super::RigidFolder;
 use super::Border;
 use super::Physics;
@@ -39,7 +41,9 @@ impl Plugin for PhysicsPlugin{
 		.add_fixed_timestep_system("physics_update",0,move_everything.run_in_state(GameState::InGame))
 		.add_fixed_timestep_system("physics_update",0,run_collisions.run_in_state(GameState::InGame))
 		.add_fixed_timestep_system("physics_update",0,grounded_folder.run_in_state(GameState::InGame))
-		.add_fixed_timestep_system("physics_update",0,spawn_folder.run_in_state(GameState::InGame));
+		.add_fixed_timestep_system("physics_update",0,spawn_folder.run_in_state(GameState::InGame))
+		.add_fixed_timestep_system("physics_update",0,switch_state)
+		.add_fixed_timestep_system("physics_update",0,pinball.run_in_state(GameState::Pinball));
  	}
  }
 fn spawn_folder(
@@ -310,6 +314,74 @@ fn grounded_folder(//first object is colliding into second
 		}
 	}
 }
+fn switch_state(
+	mut commands: Commands,
+	keyboard: Res<Input<KeyCode>>,
+	asset_server: Res<AssetServer>,
+	query: Query<(Entity,Option<&Ball>,Option<&Background>)>,
+){
+
+	if keyboard.just_pressed(KeyCode::M){
+		commands.insert_resource(NextState(GameState::Pinball));
+		//info!("state changed");
+		let handy:Handle<Image> = asset_server.load("pinball_bg.png");
+		commands.spawn().insert_bundle(SpriteBundle{
+			texture: handy,
+			transform: Transform::from_xyz(0.0,0.0,2.0),
+			..default()
+		}).insert(Background{});
+		commands.spawn()
+				.insert_bundle(SpriteBundle{
+				texture: asset_server.load("ball.png"),
+				transform: Transform::from_xyz(100.0,0.0,3.0),
+				..default()
+				}).insert(Size{
+					size: Vec2{
+						x:32.0,
+						y:32.0,
+					}
+				}).insert(Ball{})
+				.insert(Physics{
+					delta_x:0.0,
+					delta_y:0.0,
+					delta_omega:0.0,
+					gravity:1.0,
+				});
+	}
+	if keyboard.just_pressed(KeyCode::N){
+		for (ent, ball, bg) in query.iter(){
+			if let Some(ball)=ball{
+				commands.entity(ent).despawn();
+			}
+			if let Some(bg)=bg{
+				commands.entity(ent).despawn();
+			}
+		}
+		//commands.entity().despawn();
+		commands.insert_resource(NextState(GameState::InGame));
+	}
+}
+
+fn pinball(
+	time: Res<Time>,
+	keyboard_input: Res<Input<KeyCode>>,
+	mut query: Query<(&mut Physics, &Size, &mut Transform, Option<&Ball>)>,
+){
+	for (mut phys, object, mut transform, ball) in query.iter_mut(){
+		if let Some(ball)=ball{
+			const FRAMERATE: f32 = 1.0/60.0;
+			const GRAV: f32 = 10.0;
+			phys.delta_y -= GRAV * phys.gravity;
+			if transform.translation.y <= (-1.0*SCREEN_HEIGHT/2.0) +(object.size.y/2.0){
+				phys.delta_y = 0.0;
+			}
+			transform.translation.x += FRAMERATE*phys.delta_x;
+			transform.translation.y += FRAMERATE*phys.delta_y;
+				
+			transform.translation = inbounds(transform.translation, object.size);
+		}
+	}
+}
 fn move_everything(
 	time: Res<Time>,
 	keyboard_input: Res<Input<KeyCode>>,
@@ -321,6 +393,7 @@ fn move_everything(
 	const GRAV: f32 = 10.0;
 	const Y_ACCEL: f32 = 550.0;
 	const FRICTION_SCALE: f32 = 0.75;
+	
 	for (mut phys, object, mut transform, mut shape, mut player, recycle, folder, border) in query.iter_mut(){
 		if let Some(mut border)=border{
 			continue;

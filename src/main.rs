@@ -29,6 +29,10 @@ struct Player{
 #[derive(Component)]
 struct Folder{}
 #[derive(Component)]
+struct Ball{}
+#[derive(Component)]
+struct Background{}
+#[derive(Component)]
 struct RigidFolder{}
 #[derive(Component)]
 struct Border{}
@@ -48,6 +52,7 @@ static SCREEN_HEIGHT:f32 = 720.0;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum GameState{
 	InGame,
+	Pinball,
 	Paused,
 	Rover,
 }
@@ -177,7 +182,8 @@ fn setup(mut commands: Commands,
 			size: Vec2{
 				x:37.0,
 				y:32.0,
-			}
+
+}
 		});
 	commands.spawn()
 		.insert_bundle(SpriteBundle{
