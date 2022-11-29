@@ -287,6 +287,7 @@ fn grounded_folder(//first object is colliding into second
 			let mut collision_check = player1.as_mut();
 			if let Some(folder2) = folder2{
 				let phys = phys1.as_mut().unwrap();
+				//let folder = folder2.unwrap();
 				let translation1 = &mut transform1.translation;
 				let translation2 = &mut transform2.translation;
 				let size1 = object1.size;
@@ -297,7 +298,7 @@ fn grounded_folder(//first object is colliding into second
 					match c{
 						Some(Collision::Left)=>{phys.delta_x=0.0;collision_check.is_colliding_left=true;},
 						Some(Collision::Right)=>{phys.delta_x=0.0;collision_check.is_colliding_right=true;},
-						Some(Collision::Top)=>{phys.delta_y=0.0;phys.gravity=0.0;collision_check.is_grounded=true;},
+						Some(Collision::Top)=>{phys.delta_y=0.0;phys.gravity=0.0;collision_check.is_grounded=true;collision_check.is_grounded_folder=true;collision_check.folder_collide_id=folder2.state_id;},
 						Some(Collision::Bottom)=>{phys.delta_y=0.0;},
 						Some(Collision::Inside)=>{phys.delta_x=0.0;},
 						None=>(),
@@ -318,47 +319,69 @@ fn switch_state(
 	mut commands: Commands,
 	keyboard: Res<Input<KeyCode>>,
 	asset_server: Res<AssetServer>,
-	query: Query<(Entity,Option<&Ball>,Option<&Background>)>,
+	pinball_query: Query<(Entity,Option<&Ball>,Option<&Background>)>,
+	player_query: Query<(&Player)>,
 ){
-
-	if keyboard.just_pressed(KeyCode::M){
-		commands.insert_resource(NextState(GameState::Pinball));
-		//info!("state changed");
-		let handy:Handle<Image> = asset_server.load("pinball_bg.png");
-		commands.spawn().insert_bundle(SpriteBundle{
-			texture: handy,
-			transform: Transform::from_xyz(0.0,0.0,2.0),
-			..default()
-		}).insert(Background{});
-		commands.spawn()
-				.insert_bundle(SpriteBundle{
-				texture: asset_server.load("ball.png"),
-				transform: Transform::from_xyz(100.0,0.0,3.0),
-				..default()
-				}).insert(Size{
-					size: Vec2{
-						x:32.0,
-						y:32.0,
-					}
-				}).insert(Ball{})
-				.insert(Physics{
-					delta_x:0.0,
-					delta_y:0.0,
-					delta_omega:0.0,
-					gravity:1.0,
-				});
-	}
-	if keyboard.just_pressed(KeyCode::N){
-		for (ent, ball, bg) in query.iter(){
-			if let Some(ball)=ball{
-				commands.entity(ent).despawn();
-			}
-			if let Some(bg)=bg{
-				commands.entity(ent).despawn();
+	for (player) in player_query.iter(){
+		if keyboard.just_pressed(KeyCode::M) && player.is_grounded_folder{
+			match player.folder_collide_id{
+				0=>{
+					commands.insert_resource(NextState(GameState::Pinball));
+					//info!("state changed");
+					let handy:Handle<Image> = asset_server.load("pinball_bg.png");
+					commands.spawn().insert_bundle(SpriteBundle{
+						texture: handy,
+						transform: Transform::from_xyz(0.0,0.0,2.0),
+						..default()
+					}).insert(Background{});
+					commands.spawn()
+							.insert_bundle(SpriteBundle{
+							texture: asset_server.load("ball.png"),
+							transform: Transform::from_xyz(100.0,0.0,3.0),
+							..default()
+							}).insert(Size{
+								size: Vec2{
+									x:32.0,
+									y:32.0,
+								}
+							}).insert(Ball{})
+							.insert(Physics{
+								delta_x:0.0,
+								delta_y:0.0,
+								delta_omega:0.0,
+								gravity:1.0,
+							});
+				},
+				1=>{
+					commands.insert_resource(NextState(GameState::Jumpscare));
+					//info!("state changed");
+					let handy:Handle<Image> = asset_server.load("jumpscare_bg.png");
+					commands.spawn().insert_bundle(SpriteBundle{
+						texture: handy,
+						transform: Transform::from_xyz(0.0,0.0,2.0),
+						..default()
+					}).insert(Background{});
+					commands.spawn().insert_bundle(SpriteBundle{
+						texture: asset_server.load("jumpscare.png"),
+						transform: Transform::from_xyz(0.0,0.0,3.0),
+						..default()
+					}).insert(Background{});
+				},
+				|2|3=>(),
+				_=>(),
 			}
 		}
-		//commands.entity().despawn();
-		commands.insert_resource(NextState(GameState::InGame));
+		if keyboard.just_pressed(KeyCode::N){
+			for (ent, ball, bg) in pinball_query.iter(){
+				if let Some(ball)=ball{
+					commands.entity(ent).despawn();
+				}
+				if let Some(bg)=bg{
+					commands.entity(ent).despawn();
+				}
+			}
+			commands.insert_resource(NextState(GameState::InGame));
+		}
 	}
 }
 
@@ -429,8 +452,11 @@ fn move_everything(
 			}
 			if collision_check.is_grounded{//note: need to replace this with a function that checks for grounded for all physics entities
 				phys.delta_y = 0.0;
-				phys.delta_y += jumping * Y_ACCEL;
-				collision_check.is_grounded=false;
+				if jumping==1.0{
+					phys.delta_y += jumping * Y_ACCEL;
+					collision_check.is_grounded=false;
+					collision_check.is_grounded_folder=false;
+				}
 			}
 			
 		}
@@ -445,6 +471,7 @@ fn move_everything(
 			//info!("omega: {}", phys.delta_omega);
 			transform.rotate_local_z(phys.delta_omega);
 			phys.delta_omega *= 0.75;
+			
 		}
 		
 		
