@@ -107,9 +107,14 @@ fn setup_rover(mut commands: Commands, asset_server: Res<AssetServer>) {
             style: Style {
                 size: Size::new(Val::Px(200.0), Val::Px(31.0)),
                 align_items: AlignItems::Center,
+                position_type: PositionType::Absolute,
+                position: UiRect {
+                    left: Val::Px(110.0),
+                    ..default()
+                },
                 ..default()
             },
-            // focus_policy: FocusPolicy::Pass,
+            focus_policy: bevy::ui::FocusPolicy::Pass,
             ..default()
         }
     ).with_children(|parent| {
@@ -177,7 +182,7 @@ fn chat_update(
 
         if (format!("{rstate:?}") == "RoverState::Thinking") {
             //just came from listening, so outputting user msg
-            info!("thinking");
+            // info!("thinking");
         } else {
             //is currently talking, so outputting rover
             // info!("{:?}", rstate);
@@ -303,7 +308,7 @@ fn text_input(
             user_text.sections[0].value = format!("");
             msg.val.pop();
             msg.name = String::from("User: ");
-            info!("{:?}", msg.val);
+            // info!("{:?}", msg.val);
             commands.insert_resource(NextState(RoverState::Thinking));
         }
 
@@ -327,7 +332,7 @@ fn get_rover_response(
 
     //check for funny vals
     let question = msg.val.clone();
-    if (question == String::from("farnan is great")){
+    if question == String::from("farnan is great"){
         commands.insert_resource(NextState(GameState::Paused));
         super::ui::spawn_blue_screen_of_death(commands, asset_server);
         return;
@@ -336,7 +341,7 @@ fn get_rover_response(
     let parsed = parser(question);
    // let stemmed = stemmer(parsed);
     let indexed = indexer(parsed);
-    let answer = answerer(indexed, stage.val, asset_server);
+    let answer = answerer(indexed, 100, asset_server);
     // msg.val = String::from("eat shit");
     msg.val = answer;
     msg.name = "rover: ".to_owned();
@@ -395,19 +400,23 @@ fn indexer (toks: Vec<String>) -> Vec<f64> {
     //UNCOMMENT FOR SKIPGRAM
 
     for t in toks.iter(){
+        info!("t:{:?}", t);
+        // info!("dictlen:{:?}", dict.keys().len());
         match dict.get(t){
             Some(s) => {
-                info!("s{:?},t{:?}", s, t);
+                info!("insome, s{:?},t{:?}", s, t);
                 if (*s >= weights.len().try_into().unwrap()) {
                     let blank = vec!(0.0; CONSTANTS::H);
                     super::maphs::sum(&mut sent_embed, &blank);
 
                 } else {
                     let embed = &weights[*s as usize];
+                    info!("embedlen:{:?}", embed.len());
                     super::maphs::sum(&mut sent_embed, &embed);
                 }
             }    
             None => {   
+                info!("got to none in indexer");
                 let mut file = OpenOptions::new()
                     .append(true)
                     .open("./assets/words_to_add.txt")
@@ -434,13 +443,15 @@ fn answerer(idxs: Vec<f64>,
     let raw_qa_list: String = fs::read_to_string("./assets/qa_list.json").unwrap();
     let qa_json = serde_json::from_str::<Dict<Question>>(&raw_qa_list).unwrap();
     let mut closest_answer: String = String::from("");
-    let mut least_distance = 50.0;
+    let mut least_distance = 500000.0;
     for p in qa_json.items.iter() {
+        info!("in answerer, idxlen{:?},plen{:?}", idxs.len(), p.vector.len());
         let dist = maphs::cos_distance(&idxs, &p.vector);
+        info!("answerer:dist: {:?}", dist);
         if dist < least_distance && p.priority <= stage {
             least_distance = dist;
             closest_answer = p.answer.clone()}
-        // info!("{:?}", p.question);
+            info!("chosenq:{:?}", p.question);
     }
     return closest_answer;
 }
