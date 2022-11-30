@@ -258,7 +258,7 @@ fn open_rover(
 
         commands.spawn().insert_bundle(SpriteBundle{
             texture: asset_server.load("rover-1.png"),
-            transform: Transform::from_xyz(-300.0,-325.0,1.0),
+            transform: Transform::from_xyz(-270.0,-325.0,1.0),
             ..default()
             }).insert(roverSprite);
     
@@ -400,23 +400,23 @@ fn indexer (toks: Vec<String>) -> Vec<f64> {
     //UNCOMMENT FOR SKIPGRAM
 
     for t in toks.iter(){
-        info!("t:{:?}", t);
+        // info!("t:{:?}", t);
         // info!("dictlen:{:?}", dict.keys().len());
         match dict.get(t){
             Some(s) => {
-                info!("insome, s{:?},t{:?}", s, t);
+                // info!("insome, s{:?},t{:?}", s, t);
                 if (*s >= weights.len().try_into().unwrap()) {
                     let blank = vec!(0.0; CONSTANTS::H);
                     super::maphs::sum(&mut sent_embed, &blank);
 
                 } else {
                     let embed = &weights[*s as usize];
-                    info!("embedlen:{:?}", embed.len());
+                    // info!("embedlen:{:?}", embed.len());
                     super::maphs::sum(&mut sent_embed, &embed);
                 }
             }    
             None => {   
-                info!("got to none in indexer");
+                // info!("got to none in indexer");
                 let mut file = OpenOptions::new()
                     .append(true)
                     .open("./assets/words_to_add.txt")
@@ -445,13 +445,13 @@ fn answerer(idxs: Vec<f64>,
     let mut closest_answer: String = String::from("");
     let mut least_distance = 500000.0;
     for p in qa_json.items.iter() {
-        info!("in answerer, idxlen{:?},plen{:?}", idxs.len(), p.vector.len());
+        // info!("in answerer, idxlen{:?},plen{:?}", idxs.len(), p.vector.len());
         let dist = maphs::cos_distance(&idxs, &p.vector);
-        info!("answerer:dist: {:?}", dist);
+        // info!("answerer:dist: {:?}", dist);
         if dist < least_distance && p.priority <= stage {
             least_distance = dist;
             closest_answer = p.answer.clone()}
-            info!("chosenq:{:?}", p.question);
+            // info!("chosenq:{:?}", p.question);
     }
     return closest_answer;
 }
