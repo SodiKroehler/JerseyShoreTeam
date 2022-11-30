@@ -1,3 +1,5 @@
+// use std::path::absolute;
+
 use bevy::{prelude::*};
 use crate::CONSTANTS;
 
@@ -48,9 +50,11 @@ fn spawn_xp_ui_elems(mut commands: Commands, asset_server: Res<AssetServer>){
     });
 
     commands.spawn_bundle(ButtonBundle {
+        transform: Transform::from_xyz(0.0,0.0,2.0),
         style: Style {
                 size: Size::new(Val::Px(100.0), Val::Px(31.0)),
                 // justify_content: JustifyContent::FlexStart,
+                position_type: PositionType::Absolute,
                 align_items: AlignItems::Center,
                 margin: UiRect {
                     right: Val::Px(10.0),
@@ -90,7 +94,7 @@ fn setup_credits(mut commands: Commands,
     commands
 		.spawn_bundle(SpriteBundle {
 			texture: asset_server.load("credit-sheet.png"),
-            transform: Transform::from_xyz(initial_offset, 0., 1.),
+            transform: Transform::from_xyz(initial_offset, 0., 10.),
 			..default()
 		}).insert(CreditTimer(Timer::from_seconds(5., true)));
 }
@@ -130,13 +134,18 @@ fn enter_paused(mut commands: Commands,
         transform: Transform::from_xyz(0.0,0.0,14.0),
         style: Style {
             size: Size::new(Val::Px(1280.0), Val::Px(720.0)),
+            position_type: PositionType::Absolute,
+            position: UiRect {
+                right: Val::Px(0.0),
+                bottom: Val::Px(0.0),
+                ..default()
+            },
             ..default()
         },
         color: Color::rgba(0.0, 0.0, 0.0, 0.60).into(),
         ..default()
     }).with_children(|parent| {
         parent.spawn_bundle(ButtonBundle {
-            transform: Transform::from_xyz(0.0,0.0,15.0),
             style: Style {
                 size: Size::new(Val::Px(150.0), Val::Px(65.0)),
                 margin: UiRect::all(Val::Auto),
@@ -210,8 +219,7 @@ fn handle_start_button(mut commands: Commands,
 
 fn handle_user_input_focus(mut commands: Commands,
     mut inter_query: Query<&Interaction,
-                    (Changed<Interaction>, With<Button>, 
-                    With<userInput>)>){
+                    (Changed<Interaction>, With<userInput>)>){
     for interaction in &mut inter_query {
        info!("{:?}", interaction);
         match *interaction {
@@ -231,11 +239,17 @@ fn handle_user_input_focus(mut commands: Commands,
 pub fn spawn_blue_screen_of_death(mut commands: Commands,
                                     asset_server: Res<AssetServer>){
     info!("death to america and to butter sauce");
-
+  
     commands.spawn_bundle(NodeBundle{
         transform: Transform::from_xyz(0.0,0.0,20.0),
         style: Style {
             size: Size::new(Val::Px(1280.0), Val::Px(720.0)),
+            position_type: PositionType::Absolute,
+            position: UiRect {
+                right: Val::Px(0.0),
+                bottom: Val::Px(0.0),
+                ..default()
+            },
             ..default()
         },
         color: CONSTANTS::XP_BLUE.into(),

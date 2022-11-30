@@ -4,7 +4,7 @@ pub fn cos_distance(a: &Vec<f64>, b: &Vec<f64>) -> f64{
     // dot-product(u, v) / sqrt(dot-product(u, u))*sqrt(dot-product(v,v))
     let a_sum: f64 = dot_product(a, a).sqrt();
     let b_sum: f64 = dot_product(b, b).sqrt();
-    // info!("a:{:?}, b:{:?}", a_sum, b_sum);
+    info!("a:{:?}, b:{:?}", a_sum, b_sum);
 
     let dist: f64 = dot_product(a, b)/(a_sum * b_sum) ;
     return dist;
@@ -20,7 +20,8 @@ pub fn dot_product(a: &Vec<f64>, b: &Vec<f64>) -> f64{
             sum += (a[i] * b[i]);
         }
     }
-    println!("{:?}", sum);
+    //println!("{:?}", sum);
+    if sum == 0.0 {return 1.0;} // bad idea but need to not have a zero to sqrt
     return sum;
 }
 

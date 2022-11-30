@@ -1,31 +1,31 @@
 fn TEMP_create_dictionary(){
-     let mut data = fs::read_to_string("./assets/corpus.txt").expect("Error while reading file");
-     data = data.replace(&['(', ')', ',', '"', '.', ';', ':', '\''][..], "");
- 
-     let corpus_tokens = stemmer(parser(data));
-     let mut dict = HashMap::new();
-     let mut idx = 0.0;
-     for corp_tok in corpus_tokens.iter(){
-         if !dict.contains_key(corp_tok){
-             dict.insert(corp_tok.to_owned(), idx);
-             idx+=1;
-         }
-         // let tempvar = idx+=1;
-         // *dict.entry(corp_tok.to_owned()).or_insert_with_key(|key| tempvar));
-     }
-     let j = serde_json::to_string(&dict).unwrap();
-     fs::write("./assets/dictionary.json", j).unwrap();
- }
 
-fn TEMP_update_questions(){
-    let raw_qa_list: String = fs::read_to_string("./assets/questions_answers.json").unwrap();
-    let qa_json = serde_json::from_str::<Dict<Question>>(&raw_qa_list).unwrap();
-    for p in qa_json.items.iter() {
-        let lil_ran_through_sentence = indexer(stemmer(parser(p.question.clone())));
+    let file = File::open("./assets/train.jsonl").expect("Error while reading file");
+    let reader = BufReader::new(file);
+
+   
+    // let mut data = fs::read_to_string("./assets/train.jsonl").expect("Error while reading file");
+    let mut dict = HashMap::new();
+    let mut idx :usize = 2;
+    // for jline in data.iter(){
+    for jline in reader.lines() {
+        let point: Line = serde_json::from_str(&jline.unwrap()).unwrap();
+        // println!("{:?}", point.question);
+        let question = parser(point.question);
+        for corp_tok in question.iter(){
+            // println!("{:?}", corp_tok);
+            if !dict.contains_key(corp_tok){
+                dict.insert(corp_tok.to_owned(), idx);
+                idx+=1;
+            }
+        }
+        // if idx > 5 {break;}
     }
-    let j = serde_json::to_string(&qa_json).unwrap();
-    fs::write("./assets/qa_list.json", j).unwrap();
+    let j = serde_json::to_string(&dict).unwrap();
+    fs::write("./assets/dictionary.json", j).unwrap();
 }
+
+
 
 fn read_weights_to_json(filename: String, V: usize){
 
