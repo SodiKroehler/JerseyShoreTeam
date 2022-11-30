@@ -22,19 +22,28 @@ struct FolderSpawnEvent(Vec3);//holds the position vector of the spawner
 #[derive(Component)]
 struct Player{
 	is_grounded: bool,
+	is_grounded_folder: bool,
 	is_colliding_left: bool,
 	is_colliding_right: bool,
+	folder_collide_id: u32,
 }
 #[derive(Component)]
 struct Folder{}
 #[derive(Component)]
-struct RigidFolder{}
+struct Ball{}
+#[derive(Component)]
+struct Background{}
+#[derive(Component)]
+struct RigidFolder{
+	state_id: u32,
+}
 #[derive(Component)]
 struct Border{}
 #[derive(Component)]
 struct Physics{
 	delta_x: f32,
 	delta_y: f32,
+	delta_omega: f32,
 	gravity: f32,
 }
 
@@ -46,6 +55,8 @@ static SCREEN_HEIGHT:f32 = 720.0;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum GameState{
 	InGame,
+	Pinball,
+	Jumpscare,
 	Paused,
 	Rover,
 	Ending,
@@ -96,8 +107,10 @@ fn setup(mut commands: Commands,
 		..default()
 		}).insert(Player{
 			is_grounded:false,
+			is_grounded_folder:false,
 			is_colliding_left:false,
 			is_colliding_right:false,
+			folder_collide_id:0,
 		})
 		.insert(Size{
 			size: Vec2{
@@ -107,6 +120,7 @@ fn setup(mut commands: Commands,
 		}).insert(Physics{
 			delta_x:0.0,
 			delta_y:0.0,
+			delta_omega:0.0,
 			gravity:1.0,
 		}).insert(Shape{
 			vertices: vec![Vec3::new(-15.0,25.0,0.0),Vec3::new(15.0,25.0,0.0),Vec3::new(15.0,-25.0,0.0),Vec3::new(-15.0,-25.0,0.0)],
@@ -116,7 +130,7 @@ fn setup(mut commands: Commands,
 	commands.spawn()
 		.insert_bundle(SpriteBundle{
 		texture: asset_server.load("recycle_bin1.png"),
-		transform: Transform::from_xyz(-590.0,320.0,1.0),
+		transform: Transform::from_xyz(-540.0,270.0,1.0),
 		..default()
 		}).insert(Size{
 			size: Vec2{
@@ -129,10 +143,11 @@ fn setup(mut commands: Commands,
 		.insert(Physics{
 			delta_x:0.0,
 			delta_y:0.0,
+			delta_omega:0.0,
 			gravity:0.0,
 		}).insert(Shape{
 			vertices: vec![Vec3::new(-18.5,21.5,0.0),Vec3::new(18.5,21.5,0.0),Vec3::new(15.5,-21.5,0.0),Vec3::new(-15.5,-21.5,0.0)],
-			origin: Vec3::new(-590.0,320.0,1.0),//needs to be same as starting transform
+			origin: Vec3::new(-540.0,270.0,1.0),//needs to be same as starting transform
 		});
 	commands.spawn()
 		.insert_bundle(SpriteBundle{
@@ -140,6 +155,7 @@ fn setup(mut commands: Commands,
 		transform: Transform::from_xyz(-350.0,140.0,1.0),
 		..default()
 		}).insert(RigidFolder{
+			state_id: 3,
 		}).insert(Size{
 			size: Vec2{
 				x:37.0,
@@ -152,6 +168,7 @@ fn setup(mut commands: Commands,
 		transform: Transform::from_xyz(-150.0,40.0,1.0),
 		..default()
 		}).insert(RigidFolder{
+			state_id: 2,
 		}).insert(Size{
 			size: Vec2{
 				x:37.0,
@@ -164,11 +181,13 @@ fn setup(mut commands: Commands,
 		transform: Transform::from_xyz(50.0,-60.0,1.0),
 		..default()
 		}).insert(RigidFolder{
+			state_id: 1,
 		}).insert(Size{
 			size: Vec2{
 				x:37.0,
 				y:32.0,
-			}
+
+}
 		});
 	commands.spawn()
 		.insert_bundle(SpriteBundle{
@@ -176,6 +195,7 @@ fn setup(mut commands: Commands,
 		transform: Transform::from_xyz(200.0,-160.0,1.0),
 		..default()
 		}).insert(RigidFolder{
+			state_id: 0,
 		}).insert(Size{
 			size: Vec2{
 				x:37.0,
@@ -195,6 +215,7 @@ fn setup(mut commands: Commands,
 		}).insert(Physics{
 			delta_x:0.0,
 			delta_y:0.0,
+			delta_omega:0.0,
 			gravity:0.0,
 		}).insert(Shape{
 			vertices: vec![Vec3::new(-650.0,25.0,0.0),Vec3::new(650.0,25.0,0.0),Vec3::new(650.0,-25.0,0.0),Vec3::new(-650.0,-25.0,0.0)],
@@ -213,6 +234,7 @@ fn setup(mut commands: Commands,
 		}).insert(Physics{
 			delta_x:0.0,
 			delta_y:0.0,
+			delta_omega:0.0,
 			gravity:0.0,
 		}).insert(Shape{
 			vertices: vec![Vec3::new(-650.0,25.0,0.0),Vec3::new(650.0,25.0,0.0),Vec3::new(650.0,-25.0,0.0),Vec3::new(-650.0,-25.0,0.0)],
