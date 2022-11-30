@@ -1,16 +1,26 @@
+// use std::path::absolute;
+
 use bevy::{prelude::*};
+use crate::CONSTANTS;
+
 use super::GameState;
 use iyes_loopless::prelude::*;
-use super::shared_styles::*;
+use super::CONSTANTS::*;
 
 pub struct UiPlugin;
 
 #[derive(Component, Deref, DerefMut)]
 struct CreditTimer(Timer);
 
-
 #[derive(Component)]
 struct pause_screen;
+
+#[derive(Component)]
+struct start_button;
+
+#[derive(Component)]
+struct userInput;
+
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
@@ -19,18 +29,51 @@ impl Plugin for UiPlugin {
         .add_system (
             process_triggers
                 .run_in_state(GameState::InGame))
-        .add_enter_system(GameState::InGame, spawn_xp_ui_elems)
+        .add_startup_system(spawn_xp_ui_elems)
         .add_enter_system(GameState::Ending, setup_credits)
         .add_system (roll_credits.run_in_state(GameState::Ending))
+        .add_system (handle_user_input_focus.run_in_state(GameState::InGame))
         .add_exit_system(GameState::Ending, exit_credits)
         .add_enter_system(GameState::Paused, enter_paused)
         .add_system(pause_button.run_in_state(GameState::Paused))
+        .add_system(handle_start_button.run_in_state(GameState::InGame))
         .add_exit_system(GameState::Paused, exit_paused);
     }
 }
 
-fn spawn_xp_ui_elems(mut commands: Commands){
+fn spawn_xp_ui_elems(mut commands: Commands, asset_server: Res<AssetServer>){
+    
+    commands.spawn_bundle(SpriteBundle {
+        texture: asset_server.load("taskbar.png"),
+        transform: Transform::from_xyz(0.0, -346.0, 1.),
+        ..default()
+    });
 
+    commands.spawn_bundle(ButtonBundle {
+        transform: Transform::from_xyz(0.0,0.0,2.0),
+        style: Style {
+                size: Size::new(Val::Px(100.0), Val::Px(31.0)),
+                // justify_content: JustifyContent::FlexStart,
+                position_type: PositionType::Absolute,
+                align_items: AlignItems::Center,
+                margin: UiRect {
+                    right: Val::Px(10.0),
+                    ..default()
+                },
+                ..default()
+            },
+            color: START_GREEN.into(),
+            ..default()
+        }).with_children(|parent| {
+            parent.spawn_bundle(TextBundle::from_section(
+                "Start",
+                TextStyle {
+                    font: asset_server.load("Jersey.ttf"),
+                    font_size: 20.0,
+                    color: Color::WHITE,
+                },
+            ));
+        }).insert(start_button);
 }
 
 fn process_triggers(mut commands: Commands, kbd: Res<Input<KeyCode>>) {
@@ -51,10 +94,9 @@ fn setup_credits(mut commands: Commands,
     commands
 		.spawn_bundle(SpriteBundle {
 			texture: asset_server.load("credit-sheet.png"),
-            transform: Transform::from_xyz(initial_offset, 0., 1.),
+            transform: Transform::from_xyz(initial_offset, 0., 10.),
 			..default()
-		})
-        .insert(CreditTimer(Timer::from_seconds(5., true)));
+		}).insert(CreditTimer(Timer::from_seconds(5., true)));
 }
 
 fn roll_credits(
@@ -89,16 +131,21 @@ fn enter_paused(mut commands: Commands,
                 asset_server: Res<AssetServer>){
 
     commands.spawn_bundle(NodeBundle{
-        transform: Transform::from_xyz(0.0,0.0,4.0),
+        transform: Transform::from_xyz(0.0,0.0,14.0),
         style: Style {
             size: Size::new(Val::Px(1280.0), Val::Px(720.0)),
+            position_type: PositionType::Absolute,
+            position: UiRect {
+                right: Val::Px(0.0),
+                bottom: Val::Px(0.0),
+                ..default()
+            },
             ..default()
         },
         color: Color::rgba(0.0, 0.0, 0.0, 0.60).into(),
         ..default()
     }).with_children(|parent| {
         parent.spawn_bundle(ButtonBundle {
-            transform: Transform::from_xyz(0.0,0.0,5.0),
             style: Style {
                 size: Size::new(Val::Px(150.0), Val::Px(65.0)),
                 margin: UiRect::all(Val::Auto),
@@ -124,7 +171,8 @@ fn enter_paused(mut commands: Commands,
 
 fn pause_button(mut commands: Commands,
                 mut inter_query: Query<(&Interaction, &mut UiColor),
-                                (Changed<Interaction>, With<Button>)>){
+                                (Changed<Interaction>, With<Button>, 
+                                Without<start_button>)>){
 
     for (interaction, mut color) in &mut inter_query {
         match *interaction {
@@ -147,4 +195,74 @@ fn exit_paused(mut commands: Commands,
     for ent in q.iter() {
         commands.entity(ent).despawn_recursive();    
     }
+}
+
+fn handle_start_button(mut commands: Commands,
+    mut inter_query: Query<&Interaction,
+                    (Changed<Interaction>, With<Button>, 
+                    With<start_button>)>){
+
+    for interaction in &mut inter_query {
+        match *interaction {
+            Interaction::Clicked => {
+                commands.insert_resource(NextState(GameState::Rover));
+            }
+            Interaction::Hovered => {
+            // *color = HOVERED_BUTTON.into();
+            }
+            Interaction::None => {
+              //  *color = XP_BLUE.into();
+            }
+        }
+    }
+}
+
+fn handle_user_input_focus(mut commands: Commands,
+    mut inter_query: Query<&Interaction,
+                    (Changed<Interaction>, With<userInput>)>){
+    for interaction in &mut inter_query {
+       info!("{:?}", interaction);
+        match *interaction {
+            Interaction::Clicked => {
+                commands.insert_resource(NextState(GameState::Rover));
+            }
+            Interaction::Hovered => {
+                // *color = HOVERED_BUTTON.into();
+            }
+            Interaction::None => {
+                //  *color = XP_BLUE.into();
+            }
+        }
+    }
+}
+
+pub fn spawn_blue_screen_of_death(mut commands: Commands,
+                                    asset_server: Res<AssetServer>){
+    info!("death to america and to butter sauce");
+  
+    commands.spawn_bundle(NodeBundle{
+        transform: Transform::from_xyz(0.0,0.0,20.0),
+        style: Style {
+            size: Size::new(Val::Px(1280.0), Val::Px(720.0)),
+            position_type: PositionType::Absolute,
+            position: UiRect {
+                right: Val::Px(0.0),
+                bottom: Val::Px(0.0),
+                ..default()
+            },
+            ..default()
+        },
+        color: CONSTANTS::XP_BLUE.into(),
+        ..default()
+    }).with_children(|parent| {
+            parent.spawn_bundle(TextBundle::from_section(
+                "A problem has been detected and the game has been stopped
+                to prevent damage to your computer.  TOO_HIGH_TRUTH_VALUE_FOR_STATEMENT",
+                TextStyle {
+                    font: asset_server.load("Jersey.ttf"),
+                    font_size: 20.0,
+                    color: Color::WHITE,
+                },
+            ));
+        });
 }

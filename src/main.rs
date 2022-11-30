@@ -67,8 +67,8 @@ mod ui;
 use ui::UiPlugin;
 mod physics;
 use physics::PhysicsPlugin;
-mod shared_styles;
-
+mod CONSTANTS;
+mod maphs;
 
 fn main() {
 	App::new()
