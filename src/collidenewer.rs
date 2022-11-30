@@ -233,9 +233,7 @@ pub fn sat_polygon_polygon(shape_a: RB, shape_b: RB) -> Option<CollisionInfo> {
             return None;
         }
 
-        let checked: (bool, bool) = check_range(poly_a_range, poly_b_range);
-        col.contain_a = checked.0;
-        col.contain_b = checked.1;
+        (col.contain_a, col.contain_b) = check_range(poly_a_range, poly_b_range);
 
         let min_dist: f32 = -(poly_b_range.1 - poly_a_range.0); //collision distance on this axis
         let abs_min: f32 = min_dist.abs();
