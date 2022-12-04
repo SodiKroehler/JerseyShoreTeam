@@ -1,14 +1,13 @@
-extern crate rust_stemmers;
+// extern crate rust_stemmers;
 use std::collections::{HashMap, VecDeque};
 use std::fs;
 use std::fs::{OpenOptions};
-use std::io::{self, prelude::*, Write, BufReader};
-use rust_stemmers::{Algorithm, Stemmer};
+use std::io::{prelude::*, Write, BufReader};
+// use rust_stemmers::{Algorithm, Stemmer};
 use serde::{Deserialize, Serialize};
-use serde_json::Result;
 use bevy::prelude::*;
 use iyes_loopless::prelude::*;
-use stop_words;
+// use stop_words;
 use crate::CONSTANTS;
 
 use super::GameState;
@@ -16,20 +15,20 @@ use super::maphs;
 
 
 //stuff for egui
-use bevy_inspector_egui::{InspectorPlugin, Inspectable};
-#[derive(Inspectable, Default)]
-struct Data {
-    should_render: bool,
-    text: String,
-    #[inspectable(min = 42.0, max = 100.0)]
-    size: f32,
-}
-use bevy_inspector_egui::WorldInspectorPlugin;
+// use bevy_inspector_egui::{InspectorPlugin, Inspectable};
+// #[derive(Inspectable, Default)]
+// struct Data {
+//     should_render: bool,
+//     text: String,
+//     #[inspectable(min = 42.0, max = 100.0)]
+//     size: f32,
+// }
+// use bevy_inspector_egui::WorldInspectorPlugin;
 // end stuff for egui
 pub struct RoverPlugin;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-enum RoverState {
+pub enum RoverState {
     Inactive,
     Listening,
     Thinking,
@@ -39,15 +38,20 @@ enum RoverState {
 #[derive(Component)]
 struct Rover;
 #[derive(Component)]
-struct chatMessage;
+struct ChatMessage;
 #[derive(Component)]
-struct chatParent;
+struct ChatParent;
 
 #[derive(Component)]
-struct roverSprite;
+struct RoverSprite;
 
 #[derive(Component)]
-struct userInput;
+struct UserInputBox;
+
+#[derive(Component)]
+struct UserInputBoxButton;
+
+
 
 //RESOURCES
 
@@ -57,9 +61,9 @@ struct Stage{
 }
 
 #[derive(Default)]
-struct LastChat{
-    name: String,
-    val: String,
+pub struct LastChat{
+    pub name: String,
+    pub val: String,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -72,8 +76,8 @@ struct Question{
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Dict <T>{
-    items: Vec<T>
+pub struct Dict <T>{
+    pub items: Vec<T>
 }
 
 impl Plugin for RoverPlugin {
@@ -88,10 +92,11 @@ impl Plugin for RoverPlugin {
                     .run_in_state(GameState::Rover)
                     .run_in_state(RoverState::Listening))
             .add_enter_system(RoverState::Thinking, get_rover_response)
-            .add_enter_system(RoverState::Thinking, chat_update)
+            .add_exit_system(RoverState::Listening, chat_update)
             .add_enter_system(RoverState::Talking, chat_update)
             //.add_plugin(WorldInspectorPlugin::new())
             .insert_resource(Stage {val : 0})
+            // .add_system(handle_user_input_focus.run_not_in_state(GameState::Rover))
             .insert_resource(LastChat {name : "Rover:".to_string(),
                                         val : "".to_string()});  
                                         
@@ -132,9 +137,35 @@ fn setup_rover(mut commands: Commands, asset_server: Res<AssetServer>) {
         parent.spawn_bundle(ButtonBundle {
             color: Color::rgba(0.999, 0.0, 0.15, 0.45).into(),
             ..default()
-        });
-    }).insert(userInput);
+        }).insert(UserInputBoxButton);
+    }).insert(UserInputBox);
 }   
+
+
+// fn handle_user_input_focus(mut commands: Commands,
+//     b_query: Query<&Interaction, (Changed<Interaction>, With<UserInputBoxButton>)>,
+//     // itext: Query<(Entity, &Children),With<UserInputBox>>,
+//     mut inter_query: Query<&Interaction, Changed<Interaction>>){ 
+
+//     // let (c_node, c_kids) = itext.single();
+//     let clickable = b_query.single();
+//     // //info!("{:?}", c_kids[1].id());
+//     // let clickable = inter_query.get(c_kids[0]).unwrap();
+
+//     // info!("{:?}", clickable);
+//     match *clickable {
+//         Interaction::Clicked => {
+//             info!("userinputtextclicked");
+//             commands.insert_resource(NextState(GameState::Rover));
+//         }
+//             Interaction::Hovered => {
+//             // *color = HOVERED_BUTTON.into();
+//         }
+//             Interaction::None => {
+//             //  *color = XP_BLUE.into();
+//         }
+//     }
+// }
 
 // fn debug_current_state(state: Res<CurrentState<GameState>>,
 //                         rstate: Res<CurrentState<RoverState>>) {
@@ -151,8 +182,8 @@ fn chat_update(
     mut commands: Commands, 
     asset_server: Res<AssetServer>,
     rstate: Res<CurrentState<RoverState>>,
-    c_child: Query<&mut Text, (With<Parent>, With<chatMessage>)>,
-    c_parent: Query<Entity, (With<chatParent>, With<Children>)>,
+    c_child: Query<&mut Text, (With<Parent>, With<ChatMessage>)>,
+    c_parent: Query<Entity, (With<ChatParent>, With<Children>)>,
     mut sp: ResMut<LastChat>){
 
         let current_speaker = &sp.name;     
@@ -174,16 +205,18 @@ fn chat_update(
                         color: Color::WHITE,
                     },
                 ),
-            ])).insert(chatMessage)
+            ])).insert(ChatMessage)
                 .id();
 
         let big_parent = c_parent.single();
         commands.entity(big_parent).push_children(&[newmsg]);
+        
+        // info!("currstate: {:?}", format!("{rstate:?}") );
 
-        if (format!("{rstate:?}") == "RoverState::Thinking") {
-            //just came from listening, so outputting user msg
-            // info!("thinking");
-        } else {
+        if format!("{rstate:?}").contains("Thinking") {
+                //just came from listening, so outputting user msg
+                info!("usrmsg: {}", sp.val);
+        } else if format!("{rstate:?}").contains("Talking"){
             //is currently talking, so outputting rover
             // info!("{:?}", rstate);
             commands.insert_resource(NextState(RoverState::Listening));
@@ -195,7 +228,7 @@ fn chat_update(
 fn open_rover(
     mut commands: Commands, 
     asset_server: Res<AssetServer>,
-    user_text_q: Query<(Entity, &Children),(With<userInput>)>,
+    user_text_q: Query<(Entity, &Children), With<UserInputBox>>,
     mut text_query: Query<&mut Text>){          
         
         let (user_text_node, user_text_kids) = user_text_q.single();
@@ -230,10 +263,10 @@ fn open_rover(
                     ..default()
                 },
                 ..default()
-            }).insert(chatParent)
+            }).insert(ChatParent)
             .id();
 
-        let current_speaker = "Rover:";
+        let current_speaker = "Rover: ";
         let first_line = commands.spawn_bundle(
             TextBundle::from_sections([
                 TextSection::new(
@@ -245,31 +278,35 @@ fn open_rover(
                     },
                 ),
                 TextSection::new(
-                    "eat shit".to_owned(),
+                    "Hello! ".to_owned(),
                     TextStyle {
                         font: asset_server.load("Jersey.ttf"),
                         font_size: 20.0,
                         color: Color::WHITE,
                     },
                 ),
-            ])).insert(chatMessage).id();   
+            ])).insert(ChatMessage).id();   
 
         commands.entity(big_parent).push_children(&[first_line]);
 
         commands.spawn().insert_bundle(SpriteBundle{
             texture: asset_server.load("rover-1.png"),
-            transform: Transform::from_xyz(-270.0,-325.0,1.0),
+            sprite: Sprite{
+                custom_size: Some(Vec2::new(20.0,20.0)),
+                ..default()
+            },
+            transform: Transform::from_xyz(-270.0,-375.0,2.0),
             ..default()
-            }).insert(roverSprite);
+            }).insert(RoverSprite);
     
         commands.insert_resource(NextState(RoverState::Listening));
             
     }
 
 fn close_rover(mut commands: Commands, 
-    query: Query<Entity, With<chatParent>>,
-    rov_query: Query<Entity, With<roverSprite>>,
-    usr_input_query: Query<Entity, With<userInput>>){
+    query: Query<Entity, With<ChatParent>>,
+    rov_query: Query<Entity, With<RoverSprite>>,
+    usr_input_query: Query<Entity, With<UserInputBox>>){
 
         for rv in rov_query.iter() {
             commands.entity(rv).despawn();
@@ -289,9 +326,9 @@ fn text_input(
     mut char_evr: EventReader<ReceivedCharacter>,
     keys: Res<Input<KeyCode>>,
     mut msg: ResMut<LastChat>,
-    user_text: Query<(Entity, &Children),(With<userInput>)>,
+    user_text: Query<(Entity, &Children), With<UserInputBox>>,
     mut text_query: Query<&mut Text>,) {
-
+        
         let (user_text_node, user_text_kids) = user_text.single();
         let mut user_text = text_query.get_mut(user_text_kids[0]).unwrap();
 
@@ -329,28 +366,24 @@ fn get_rover_response(
     mut msg: ResMut<LastChat>,
     mut stage: ResMut<Stage>,
     asset_server: Res<AssetServer>){
-
-    //check for funny vals
-    let question = msg.val.clone();
-    if question == String::from("farnan is great"){
-        commands.insert_resource(NextState(GameState::Paused));
-        super::ui::spawn_blue_screen_of_death(commands, asset_server);
-        return;
-    };
     
-    let parsed = parser(question);
+    let q = msg.val.clone();
+
+    // super::deflections::check_for_funny_values(q); will run first
+    let parsed = parser(q);
    // let stemmed = stemmer(parsed);
     let indexed = indexer(parsed);
     let answer = answerer(indexed, 100, asset_server);
-    // msg.val = String::from("eat shit");
     msg.val = answer;
     msg.name = "rover: ".to_owned();
     commands.insert_resource(NextState(RoverState::Talking));     
 }
 
-fn parser(input: String) ->Vec<String> {
+pub fn parser(input: String) ->Vec<String> {
     let mut strings = Vec::new();
-    let split = input.split(" ");
+    let no_punc = input.replace(&['(',')',',','"','.',';','?',':','\''][..], "");
+
+    let split = no_punc.split(" ");
     for s in split {
         strings.push(s.to_lowercase()); 
     }  
@@ -372,51 +405,29 @@ fn parser(input: String) ->Vec<String> {
 //returns a h long vector of the sum of all words
 fn indexer (toks: Vec<String>) -> Vec<f64> {
     // let mut indexes = Vec::<f64>::new();
-    let raw_dictionary: String = fs::read_to_string("./assets/dictionary.json").unwrap();
+    let raw_dictionary: String = fs::read_to_string("./assets/500_w2i.json").unwrap();
     let dict: HashMap<String, isize> = serde_json::from_str(&raw_dictionary).unwrap();
     
-    let mut raw_weights: String = fs::read_to_string("./assets/weights.json").unwrap();
-    let mut weights: Vec<Vec<f64>> = serde_json::from_str(&raw_weights).unwrap();
-
-    let v = dict.keys().len();
-    let mut ngram = VecDeque::from([1,1,1,1,1]); // one is not a word
-    let mut sent_embed = vec!(0.0; CONSTANTS::H);
-
-    // UNCOMMENT IF SKIPGRAM
-
-    // for t in toks.iter(){
-    //     match dict.get(t){
-    //         Some(s) => {
-    //             //indexes.push(*s as f64);}      // "hello cruel world"
-    //             ngram.push_back(*s);
-    //             ngram.pop_front();
-    //             let embed = embedder(&ngram); // [1,1, 92]
-    //             //embed = vec[x,x2, x3 ... h]
-    //             maphs::sum(&mut sent_embed, &embed);
-    //         }    
-    //         None => {fs::write("./assets/words_to_add.txt", t).unwrap();}
-    //     }
-    // }
-    //UNCOMMENT FOR SKIPGRAM
+    // println!("V = {:?}", dict.keys().len()); //9236
+    let mut ngram = VecDeque::from([1,1,1,1]); // one is not a word
+    let mut sent_embed = vec!(0.0; CONSTANTS::H*4);
+    let mut i : usize = 0;
 
     for t in toks.iter(){
-        // info!("t:{:?}", t);
-        // info!("dictlen:{:?}", dict.keys().len());
         match dict.get(t){
             Some(s) => {
-                // info!("insome, s{:?},t{:?}", s, t);
-                if (*s >= weights.len().try_into().unwrap()) {
-                    let blank = vec!(0.0; CONSTANTS::H);
-                    super::maphs::sum(&mut sent_embed, &blank);
-
-                } else {
-                    let embed = &weights[*s as usize];
-                    // info!("embedlen:{:?}", embed.len());
-                    super::maphs::sum(&mut sent_embed, &embed);
+                if i == 0 { //no 3 1's
+                    ngram.push_back(*s);
+                    ngram.pop_front();
+                    continue;
                 }
+                ngram.push_back(*s);
+                ngram.pop_front();
+                let embed : Vec<f64> = embedder(&ngram); // [1,1, 92]
+                super::maphs::sum(&mut sent_embed, &embed);
+                i+=1;
             }    
             None => {   
-                // info!("got to none in indexer");
                 let mut file = OpenOptions::new()
                     .append(true)
                     .open("./assets/words_to_add.txt")
@@ -425,33 +436,55 @@ fn indexer (toks: Vec<String>) -> Vec<f64> {
             }
         }
     }
+    for i in 0..2{ // two more times to flush it out
+        ngram.push_back(1);
+        ngram.pop_front();
+        let embed = embedder(&ngram); // [1,1, 92]
+        super::maphs::sum(&mut sent_embed, &embed);
+    }   
     return sent_embed;
 }
 
-// fn embedder(token: &VecDeque<isize>) -> Vec<f64>{
-//     // let raw_weights: String = fs::read_to_string("./assets/weights.json").unwrap();
-//     // let weights: Vec<f64> = serde_json::from_str(&raw_weights).unwrap();
-//     let mut token_embed = vec!(0.0; CONSTANTS::H);
-//     return token_embed;
-// }
+
+fn embedder(ngram: &VecDeque<isize>) -> Vec<f64>{
+
+    let mut raw_weights: String = fs::read_to_string("./assets/500_weights.json").unwrap();
+    let mut weights: Vec<Vec<f64>> = serde_json::from_str(&raw_weights).unwrap();
+
+    let mut token_embed = vec![0.0];
+    let mut index = 0;
+    token_embed.pop();
+
+    for t in ngram.iter(){
+        let word_embed = &weights[*t as usize];
+        for w in word_embed.iter(){
+            token_embed.push(*w);
+        }
+    }
+
+    return token_embed;
+}
 
 
 fn answerer(idxs: Vec<f64>,
             stage: isize,
             asset_server: Res<AssetServer> ) -> String{
     // let mut raw_qa_list = asset_server.load("questions_answers.json");
-    let raw_qa_list: String = fs::read_to_string("./assets/qa_list.json").unwrap();
+    let raw_qa_list: String = fs::read_to_string("./assets/500_qa_list.json").unwrap();
     let qa_json = serde_json::from_str::<Dict<Question>>(&raw_qa_list).unwrap();
     let mut closest_answer: String = String::from("");
-    let mut least_distance = 500000.0;
+    let mut least_distance = 0.0;
     for p in qa_json.items.iter() {
-        // info!("in answerer, idxlen{:?},plen{:?}", idxs.len(), p.vector.len());
         let dist = maphs::cos_distance(&idxs, &p.vector);
-        // info!("answerer:dist: {:?}", dist);
-        if dist < least_distance && p.priority <= stage {
+        // info!("l:{:?}d:{:?}", least_distance, dist);
+        if dist > least_distance && p.priority <= stage {
             least_distance = dist;
             closest_answer = p.answer.clone()}
-            // info!("chosenq:{:?}", p.question);
+    }
+    if least_distance < CONSTANTS::COS_DIST_THRESHOLD {
+        info!("{} confidence, sending deflection", least_distance);
+        info!("Question was closest to {}", closest_answer);
+        return super::deflections::generate_deflection(super::deflections::DeflectionType::NoMatch)
     }
     return closest_answer;
 }
