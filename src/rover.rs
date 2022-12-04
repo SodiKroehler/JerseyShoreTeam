@@ -182,10 +182,15 @@ fn chat_update(
     mut commands: Commands, 
     asset_server: Res<AssetServer>,
     rstate: Res<CurrentState<RoverState>>,
+    gstate: Res<CurrentState<GameState>>,
     c_child: Query<&mut Text, (With<Parent>, With<ChatMessage>)>,
     c_parent: Query<Entity, (With<ChatParent>, With<Children>)>,
     mut sp: ResMut<LastChat>){
 
+        if !(format!("{gstate:?}").contains("Rover")) {
+            return; //just a fail safe, in case the exit system on 
+            //listening triggers when leaving rover
+        }
         let current_speaker = &sp.name;     
         let newmsg = commands.spawn_bundle(
             TextBundle::from_sections([
@@ -207,7 +212,7 @@ fn chat_update(
                 ),
             ])).insert(ChatMessage)
                 .id();
-
+        
         let big_parent = c_parent.single();
         commands.entity(big_parent).push_children(&[newmsg]);
         
