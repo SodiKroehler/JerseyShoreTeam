@@ -13,6 +13,10 @@ use collidenew::Shape;
 use collidenew::CollisionInfo;
 
 
+#[derive(Default)]
+struct Stage{
+    val: isize,
+}
 
 #[derive(Component)]
 struct Size{
@@ -94,6 +98,7 @@ fn main() {
 		.add_plugin(PhysicsPlugin)
 		.add_plugin(DeflectionsPlugin)
 		.add_plugin(ExtraFoldersPlugin)
+		.insert_resource(Stage {val : 0})
 		.run();
 }
 

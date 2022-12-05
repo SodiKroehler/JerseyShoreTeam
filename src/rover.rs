@@ -13,6 +13,7 @@ use iyes_loopless::prelude::*;
 use crate::CONSTANTS;
 use super::GameState;
 use super::maphs;
+use super::Stage;
 
 
 //stuff for egui
