@@ -183,6 +183,102 @@ pub fn sat(shape_a: &Shape, shape_b: &Shape) -> Option<CollisionInfo> {
     return Some(col);
 }
 
+pub fn poly_circle_collide(polygon: &Shape, circle_pos: &Vec2, circle_rad: &f32) -> Option<CollisionInfo> {//shape, radius
+    let mut shortest = f32::MIN;
+    let vertices: Vec<Vec3> = line_work(&mut polygon.vertices.to_vec());
+    let mut poly: Vec<Vec2> = Vec::<Vec2>::with_capacity(vertices.len());
+    let mut axes: Vec<Vec2> = vec![Default::default(); 0];
+
+
+    let mut col = CollisionInfo {
+        //setup stuff for resolution
+        shape_a: Shape{
+        	vertices: polygon.vertices.clone(),
+        	origin: polygon.origin,
+        },
+        shape_b: Shape{
+        	vertices: polygon.vertices.clone(),
+        	origin: polygon.origin,
+        },
+        distance: 0.0,
+        vector: Vec2 { x: 0.0, y: 0.0 },
+        contain_a: true,
+        contain_b: true,
+        separation: Vec2 { x: 0.0, y: 0.0 },
+    };
+    
+    for a in vertices.iter() {
+        poly.push(a.truncate());
+    }
+
+    let v_offset: Vec2 = (polygon.origin.truncate() - *circle_pos);
+
+    let mut close: Vec2 = Vec2 { x: 0.0, y: 0.0 };
+    for v in poly.iter() {
+        let t = *v + polygon.origin.truncate();
+        let distance = circle_pos.distance(t);
+        if distance < shortest {
+            shortest = distance;
+            close.x = polygon.origin.x + v.x;
+            close.y = polygon.origin.y + v.y;
+        }
+    }
+
+    let axis: Vec2 = Vec2 {
+        x: close.x - circle_pos.x,
+        y: close.y - circle_pos.y,
+    };
+
+    let mut p_range_temp = project_shape(&poly, &axis);
+    let s_offset_temp = axis.dot(v_offset.clone());
+    p_range_temp.0 += s_offset_temp;
+    p_range_temp.1 += s_offset_temp;
+
+    let c_range_temp = project_circle(&circle_rad, &axis);
+    if (p_range_temp.0 - c_range_temp.1 > 0.0) || (c_range_temp.0 - p_range_temp.1 > 0.0) {
+        return None;
+    }
+
+    let distance_min = c_range_temp.1 - p_range_temp.0;
+    shortest = distance_min.abs();
+
+    col.distance = distance_min;
+    col.vector = axis;
+
+    (col.contain_a, col.contain_b) = check_range(p_range_temp, c_range_temp, false);
+
+    axes = make_normal(&poly, &mut axes);
+
+    for i in 0..poly.len() {
+        let mut p_range = project_shape(&poly, &axes[i]);
+
+        let s_offset = axes[i].dot(v_offset);
+        p_range.0 += s_offset;
+        p_range.1 += s_offset;
+
+        let c_range = project_circle(&circle_rad, &axes[i]);
+
+        if (p_range.0 - c_range.1 > 0.0) || (c_range.0 - p_range.1 > 0.0) {
+            return None;
+        }
+
+        (col.contain_a, col.contain_b) = check_range(p_range, c_range, false);
+
+        let distance_min_temp = c_range.1 - p_range.0;
+
+        if distance_min_temp.abs() < shortest {
+            shortest = distance_min_temp.abs();
+
+            col.distance = distance_min_temp;
+            col.vector = axes[i];
+        }
+    }
+
+    col.separation = col.vector * col.distance;
+
+    return Some(col);
+}
+
 pub fn project_shape(shape: &Vec<Vec2>, axis: &Vec2) -> (f32, f32) {
     //do dot product for first vector onto axis
     let mut min_val = axis.dot(shape[0]);
@@ -196,6 +292,38 @@ pub fn project_shape(shape: &Vec<Vec2>, axis: &Vec2) -> (f32, f32) {
     }
 
     (min_val, max_val)
+}
+pub fn project_circle(radius: &f32, axis: &Vec2) -> (f32, f32) {
+    let projection = axis.dot(Vec2 { x: 0.0, y: 0.0 });
+    (projection - radius, projection + radius)
+}
+
+fn line_work(verts: &mut Vec<Vec3>) -> Vec<Vec3> {
+    if verts.len() == 2 {
+        let p1: Vec3 = verts[0];
+        let p2: Vec3 = verts[1];
+        let mut p3: Vec3 = Vec3 {
+            x: p1.y - p2.y,
+            y: p2.x - p1.x,
+            z: p1.z,
+        };
+        p3 = p3.normalize() * 0.00001;
+        verts.push(p3);
+    }
+    verts.to_vec()
+}
+fn make_normal(verts: &Vec<Vec2>, axes: &mut Vec<Vec2>) -> Vec<Vec2> {
+    for i in 0..verts.len() {
+        axes.push(
+            Vec2 {
+                //get perpindicular to axis
+                x: verts[i].y - verts[(i + 1) % verts.len()].y,
+                y: verts[(i + 1) % verts.len()].x - verts[i].x,
+            }
+            .normalize_or_zero(),
+        );
+    }
+    axes.to_vec()
 }
 
 pub fn check_range(range_a: (f32, f32), range_b: (f32, f32), invert: bool) -> (bool, bool) {
