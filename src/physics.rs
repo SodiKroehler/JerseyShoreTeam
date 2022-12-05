@@ -42,7 +42,7 @@ impl Plugin for PhysicsPlugin{
 		.add_fixed_timestep_system("physics_update",0,run_collisions.run_in_state(GameState::InGame))
 		.add_fixed_timestep_system("physics_update",0,grounded_folder.run_in_state(GameState::InGame))
 		.add_fixed_timestep_system("physics_update",0,spawn_folder.run_in_state(GameState::InGame))
-		.add_fixed_timestep_system("physics_update",0,switch_state.run_not_in_state(GameState::Rover))
+		.add_fixed_timestep_system("physics_update",0,switch_state.run_not_in_state(GameState::Rover).run_not_in_state(GameState::Email))
 		.add_fixed_timestep_system("physics_update",0,pinball.run_in_state(GameState::Pinball));
  	}
  }

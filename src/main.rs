@@ -57,6 +57,8 @@ enum GameState{
 	InGame,
 	Pinball,
 	Jumpscare,
+	Folder,
+	Email,
 	Paused,
 	Rover,
 	Ending,
@@ -67,6 +69,11 @@ mod ui;
 use ui::UiPlugin;
 mod physics;
 use physics::PhysicsPlugin;
+mod deflections;
+use deflections::DeflectionsPlugin;
+mod extrafolders;
+use extrafolders::ExtraFoldersPlugin;
+
 mod CONSTANTS;
 mod maphs;
 
@@ -85,6 +92,8 @@ fn main() {
 		.add_plugin(RoverPlugin)
 		.add_plugin(UiPlugin)
 		.add_plugin(PhysicsPlugin)
+		.add_plugin(DeflectionsPlugin)
+		.add_plugin(ExtraFoldersPlugin)
 		.run();
 }
 
