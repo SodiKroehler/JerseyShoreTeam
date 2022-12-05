@@ -51,7 +51,7 @@ fn check_for_funny_values(mut commands: Commands,
 
 //red herring #2 - #1 is in physics
     if question == String::from("farnan is great"){
-        commands.insert_resource(NextState(GameState::Paused));
+        commands.insert_resource(NextState(GameState::Ending));
         super::ui::spawn_blue_screen_of_death(commands, asset_server);
         return;
     };

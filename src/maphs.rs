@@ -26,7 +26,7 @@ pub fn dot_product(a: &Vec<f64>, b: &Vec<f64>) -> f64{
 }
 
 pub fn sum(a: &mut Vec<f64>, b: &Vec<f64>){
-    if a.len() != b.len() {info!("Warning! sum called on unequal vectors! {},{}", a.len(), b.len());}
+    if a.len() != b.len() {panic!("Warning! sum called on unequal vectors! {},{}", a.len(), b.len());}
     let mut j = 0;
     for i in a.iter_mut(){
         *i += b[j];

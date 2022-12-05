@@ -6,6 +6,7 @@ use super::GameState;
 use iyes_loopless::prelude::*;
 use super::CONSTANTS;
 
+
 pub struct UiPlugin;
 
 #[derive(Component, Deref, DerefMut)]
@@ -58,7 +59,7 @@ fn spawn_xp_ui_elems(mut commands: Commands, asset_server: Res<AssetServer>){
     
     //START BUTTON
     commands.spawn_bundle(ButtonBundle {
-        transform: Transform::from_xyz(0.0,0.0,2.0),
+        transform: Transform::from_xyz(0.0,0.0, CONSTANTS::Z_UI + 2.0),
         style: Style {
                 size: Size::new(Val::Px(100.0), Val::Px(31.0)),
                 // justify_content: JustifyContent::FlexStart,
@@ -85,7 +86,7 @@ fn spawn_xp_ui_elems(mut commands: Commands, asset_server: Res<AssetServer>){
 
         //CLOCK
         commands.spawn_bundle(ButtonBundle {
-            transform: Transform::from_xyz(0.0,0.0,2.0),
+            transform: Transform::from_xyz(0.0,0.0, CONSTANTS::Z_UI + 2.0),
             style: Style {
                     size: Size::new(Val::Px(100.0), Val::Px(31.0)),
                     // justify_content: JustifyContent::FlexStart,
@@ -121,7 +122,7 @@ fn process_triggers(mut commands: Commands, kbd: Res<Input<KeyCode>>) {
         commands.insert_resource(NextState(GameState::Rover));
     }
     if kbd.just_pressed(KeyCode::B) {
-        commands.insert_resource(NextState(GameState::Email));
+        commands.insert_resource(NextState(GameState::Folder));
     }
     if kbd.just_pressed(KeyCode::C) {
         commands.insert_resource(NextState(GameState::Ending));
@@ -171,7 +172,7 @@ fn enter_paused(mut commands: Commands,
                 asset_server: Res<AssetServer>){
 
     commands.spawn_bundle(NodeBundle{
-        transform: Transform::from_xyz(0.0,0.0,14.0),
+        transform: Transform::from_xyz(0.0,0.0, CONSTANTS::Z_PAUSE),
         style: Style {
             size: Size::new(Val::Px(1280.0), Val::Px(720.0)),
             position_type: PositionType::Absolute,
@@ -217,7 +218,6 @@ fn pause_button(mut commands: Commands,
     for (interaction, mut color) in &mut inter_query {
         match *interaction {
             Interaction::Clicked => {
-                *color = CONSTANTS::PRESSED_BUTTON.into();
                 commands.insert_resource(NextState(GameState::InGame));
             }
             Interaction::Hovered => {
@@ -269,31 +269,12 @@ fn handle_start_button(mut commands: Commands,
 pub fn spawn_blue_screen_of_death(mut commands: Commands,
                                     asset_server: Res<AssetServer>){
     info!("death to america and to butter sauce");
-  
-    commands.spawn_bundle(NodeBundle{
-        transform: Transform::from_xyz(0.0,0.0,700.0),
-        style: Style {
-            size: Size::new(Val::Px(1280.0), Val::Px(720.0)),
-            position_type: PositionType::Absolute,
-            position: UiRect {
-                right: Val::Px(0.0),
-                bottom: Val::Px(0.0),
-                ..default()
-            },
+
+    commands
+        .spawn_bundle(SpriteBundle {
+            texture: asset_server.load("blue_screen_of_death.png"),
+            transform: Transform::from_xyz(0.0, 0., CONSTANTS::Z_PANIC),
             ..default()
-        },
-        color: CONSTANTS::XP_BLUE.into(),
-        ..default()
-    }).with_children(|parent| {
-            parent.spawn_bundle(TextBundle::from_section(
-                "A problem has been detected and the game has been stopped
-                to prevent damage to your computer.  TOO_HIGH_TRUTH_VALUE_FOR_STATEMENT",
-                TextStyle {
-                    font: asset_server.load("Jersey.ttf"),
-                    font_size: 20.0,
-                    color: Color::WHITE,
-                },
-            ));
         });
 }
 

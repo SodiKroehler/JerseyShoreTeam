@@ -8,8 +8,9 @@ use serde::{Deserialize, Serialize};
 use bevy::prelude::*;
 use iyes_loopless::prelude::*;
 // use stop_words;
-use crate::CONSTANTS;
 
+
+use crate::CONSTANTS;
 use super::GameState;
 use super::maphs;
 
@@ -55,10 +56,6 @@ struct UserInputBoxButton;
 
 //RESOURCES
 
-#[derive(Default)]
-struct Stage{
-    val: isize,
-}
 
 #[derive(Default)]
 pub struct LastChat{
@@ -94,8 +91,7 @@ impl Plugin for RoverPlugin {
             .add_enter_system(RoverState::Thinking, get_rover_response)
             .add_exit_system(RoverState::Listening, chat_update)
             .add_enter_system(RoverState::Talking, chat_update)
-            //.add_plugin(WorldInspectorPlugin::new())
-            .insert_resource(Stage {val : 0})
+            // .add_plugin(WorldInspectorPlugin::new())
             // .add_system(handle_user_input_focus.run_not_in_state(GameState::Rover))
             .insert_resource(LastChat {name : "Rover:".to_string(),
                                         val : "".to_string()});  
@@ -410,10 +406,9 @@ pub fn parser(input: String) ->Vec<String> {
 //returns a h long vector of the sum of all words
 fn indexer (toks: Vec<String>) -> Vec<f64> {
     // let mut indexes = Vec::<f64>::new();
-    let raw_dictionary: String = fs::read_to_string("./assets/500_w2i.json").unwrap();
+    let raw_dictionary: String = fs::read_to_string("./assets/6000_w2i.json").unwrap();
     let dict: HashMap<String, isize> = serde_json::from_str(&raw_dictionary).unwrap();
     
-    // println!("V = {:?}", dict.keys().len()); //9236
     let mut ngram = VecDeque::from([1,1,1,1]); // one is not a word
     let mut sent_embed = vec!(0.0; CONSTANTS::H*4);
     let mut i : usize = 0;
@@ -453,7 +448,7 @@ fn indexer (toks: Vec<String>) -> Vec<f64> {
 
 fn embedder(ngram: &VecDeque<isize>) -> Vec<f64>{
 
-    let mut raw_weights: String = fs::read_to_string("./assets/500_weights.json").unwrap();
+    let mut raw_weights: String = fs::read_to_string("./assets/6000_weights.json").unwrap();
     let mut weights: Vec<Vec<f64>> = serde_json::from_str(&raw_weights).unwrap();
 
     let mut token_embed = vec![0.0];
@@ -475,7 +470,7 @@ fn answerer(idxs: Vec<f64>,
             stage: isize,
             asset_server: Res<AssetServer> ) -> String{
     // let mut raw_qa_list = asset_server.load("questions_answers.json");
-    let raw_qa_list: String = fs::read_to_string("./assets/500_qa_list.json").unwrap();
+    let raw_qa_list: String = fs::read_to_string("./assets/6000_qa_list.json").unwrap();
     let qa_json = serde_json::from_str::<Dict<Question>>(&raw_qa_list).unwrap();
     let mut closest_answer: String = String::from("");
     let mut least_distance = 0.0;
