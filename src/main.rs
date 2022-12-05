@@ -1,6 +1,6 @@
 use bevy::{
 	prelude::*,
-	window::PresentMode, ecs::system::EntityCommands,
+	window::PresentMode, ecs::system::EntityCommands, ecs::system::Resource,
 };
 use iyes_loopless::prelude::*;
 use bevy::math::Vec2; 
@@ -11,6 +11,12 @@ use collide_circle::Collision;
 mod collidenew;
 use collidenew::Shape;
 use collidenew::CollisionInfo;
+/*mod collidenewer;
+use collidenewer::ShapeNewer;
+use collidenewer::CollisionInfoNewer;
+use collidenewer::RB;
+use collidenewer::poly_circle_collide;
+use collidenewer::rotatenewer;*/
 
 
 #[derive(Default)]
@@ -23,6 +29,7 @@ struct Size{
 	size: Vec2,
 }
 struct FolderSpawnEvent(Vec3);//holds the position vector of the spawner
+struct DespawnEvent();
 #[derive(Component)]
 struct Player{
 	is_grounded: bool,
@@ -30,11 +37,31 @@ struct Player{
 	is_colliding_left: bool,
 	is_colliding_right: bool,
 	folder_collide_id: u32,
+	folder_collide_counter: u32,
 }
 #[derive(Component)]
 struct Folder{}
 #[derive(Component)]
-struct Ball{}
+struct Ball{
+	is_grounded: bool,	
+}
+#[derive(Default)]
+struct BugSpawner{
+	timer: i32,
+	squished: u32,
+}
+#[derive(Default)]
+struct PinballSpawner{
+	spawned: bool,
+}
+#[derive(Component)]
+struct Bug{
+	timer: i32,
+}
+#[derive(Component)]
+struct Flipper{
+	delta_omega: f32,
+}
 #[derive(Component)]
 struct Background{}
 #[derive(Component)]
@@ -61,6 +88,7 @@ enum GameState{
 	InGame,
 	Pinball,
 	Jumpscare,
+	Bugshoot,
 	Folder,
 	Email,
 	Paused,
@@ -125,6 +153,7 @@ fn setup(mut commands: Commands,
 			is_colliding_left:false,
 			is_colliding_right:false,
 			folder_collide_id:0,
+			folder_collide_counter:0,
 		})
 		.insert(Size{
 			size: Vec2{
