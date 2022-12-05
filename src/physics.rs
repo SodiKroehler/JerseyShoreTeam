@@ -62,14 +62,14 @@ impl Plugin for PhysicsPlugin{
 		.add_fixed_timestep_system("physics_update",0,run_collisions.run_in_state(GameState::InGame))
 		.add_fixed_timestep_system("physics_update",0,grounded_folder.run_in_state(GameState::InGame))
 		.add_fixed_timestep_system("physics_update",0,spawn_folder.run_in_state(GameState::InGame))
-		.add_fixed_timestep_system("physics_update",0,switch_state.run_not_in_state(GameState::Rover))
 		.add_fixed_timestep_system("physics_update",0,despawn.run_not_in_state(GameState::InGame))
 		.add_fixed_timestep_system("physics_update",0,pinball_move.run_in_state(GameState::Pinball))
 		.add_fixed_timestep_system("physics_update",0,pinball_swing.run_in_state(GameState::Pinball))
 		.add_fixed_timestep_system("physics_update",0,pinball_collide.run_in_state(GameState::Pinball))
 		.add_fixed_timestep_system("physics_update",0,spawn_bugs.run_in_state(GameState::Bugshoot))
 		.add_fixed_timestep_system("bug_update",0,shoot_bugs.run_in_state(GameState::Bugshoot))
-		.add_fixed_timestep_system("physics_update",0,despawn_cleanup::<DespawnEvent>.run_not_in_state(GameState::InGame));
+		.add_fixed_timestep_system("physics_update",0,despawn_cleanup::<DespawnEvent>.run_not_in_state(GameState::InGame))
+		.add_fixed_timestep_system("physics_update",0,switch_state.run_not_in_state(GameState::Rover).run_not_in_state(GameState::Email));
  	}
  }
 fn despawn_cleanup<T: 'static + Send + Sync>(
