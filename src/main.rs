@@ -3,8 +3,8 @@ use bevy::{
 	window::PresentMode, ecs::system::EntityCommands, ecs::system::Resource,
 };
 use iyes_loopless::prelude::*;
-use bevy::math::Vec2; 
 use bevy::math::Vec3;
+use bevy::math::Vec2; 
 use bevy::asset::LoadState;
 mod collide_circle;
 use collide_circle::Collision;
