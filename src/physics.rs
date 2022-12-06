@@ -18,6 +18,7 @@ use super::collidenew::sat;
 use super::collidenew::rotate;
 use super::collidenew::poly_circle_collide;
 use super::Size;
+use super::Stage;
 use super::FolderSpawnEvent;
 use super::DespawnEvent;
 use super::PinballSpawner;
@@ -35,6 +36,10 @@ use super::Recycle;
 use super::SCREEN_WIDTH;
 use super::SCREEN_HEIGHT;
 use super::GameState;
+#[derive(Default)]
+struct FolderOpen{
+	opened: bool,
+}
 /*use super::collidenewer;
 use super::collidenewer::ShapeNewer;
 use super::collidenewer::CollisionInfoNewer;
@@ -58,6 +63,7 @@ impl Plugin for PhysicsPlugin{
  		.add_event::<FolderSpawnEvent>()
  		.init_resource::<Events<DespawnEvent>>()
  		.insert_resource(PinballSpawner{spawned: false})
+ 		.insert_resource(FolderOpen{opened: false})
 		.add_fixed_timestep_system("physics_update",0,move_everything.run_in_state(GameState::InGame))
 		.add_fixed_timestep_system("physics_update",0,run_collisions.run_in_state(GameState::InGame))
 		.add_fixed_timestep_system("physics_update",0,grounded_folder.run_in_state(GameState::InGame))
@@ -68,7 +74,7 @@ impl Plugin for PhysicsPlugin{
 		.add_fixed_timestep_system("physics_update",0,pinball_collide.run_in_state(GameState::Pinball))
 		.add_fixed_timestep_system("physics_update",0,spawn_bugs.run_in_state(GameState::Bugshoot))
 		.add_fixed_timestep_system("bug_update",0,shoot_bugs.run_in_state(GameState::Bugshoot))
-		.add_fixed_timestep_system("physics_update",0,despawn_cleanup::<DespawnEvent>.run_not_in_state(GameState::InGame))
+		//.add_fixed_timestep_system("physics_update",0,despawn_cleanup::<DespawnEvent>.run_not_in_state(GameState::InGame))
 		.add_fixed_timestep_system("physics_update",0,switch_state.run_not_in_state(GameState::Rover).run_not_in_state(GameState::Email));
  	}
  }
@@ -117,6 +123,8 @@ fn spawn_folder(
 fn despawn(
 	mut ev_despawn : EventReader<DespawnEvent>,
 	mut commands: Commands,
+	mut stage_change: ResMut<Stage>,
+	mut folder_open: ResMut<FolderOpen>,
 	despawn_query : Query<(Entity,Option<&Ball>,Option<&Background>,Option<&Bug>,Option<&Flipper>)>,
 ){
 	
@@ -135,8 +143,11 @@ fn despawn(
 				commands.entity(ent).despawn();
 			}
 		}
-		info!("advance story");	//replace with whatever int increment thing sodi wants
-		commands.insert_resource(NextState(GameState::InGame));
+		stage_change.val+=1;
+		//info!("advance story:{}", stage_change.val);	//replace with whatever int increment thing sodi wants
+		if !folder_open.opened{
+			commands.insert_resource(NextState(GameState::InGame));
+		}
 		break;
 		
 	}
@@ -277,10 +288,16 @@ fn switch_state(
 	mut commands: Commands,
 	keyboard: Res<Input<KeyCode>>,
 	asset_server: Res<AssetServer>,
+	mut ev_despawn : EventWriter<DespawnEvent>,
 	mut pinball_spawner: ResMut<PinballSpawner>,
+	mut folder_open: ResMut<FolderOpen>,
+	state: Res<CurrentState<GameState>>,
 	despawn_query: Query<(Entity,Option<&Ball>,Option<&Background>,Option<&Bug>,Option<&Flipper>)>,
 	player_query: Query<(&Player)>,
 ){
+	if let GameState::InGame=state.0{
+		folder_open.opened=false;
+	}
 	for (player) in player_query.iter(){
 		if keyboard.just_pressed(KeyCode::M) && player.is_grounded_folder{
 			match player.folder_collide_id{
@@ -288,15 +305,15 @@ fn switch_state(
 					commands.insert_resource(NextState(GameState::Pinball));
 					if !pinball_spawner.spawned{
 						//info!("state changed");
-						let handy:Handle<Image> = asset_server.load("pinball_bg.png");
+						let handy:Handle<Image> = asset_server.load("foosball_bg.png");
 						commands.spawn().insert_bundle(SpriteBundle{
 							texture: handy,
 							transform: Transform::from_xyz(0.0,0.0,2.0),
 							..default()
 						}).insert(Background{});
 						commands.spawn().insert_bundle(SpriteBundle{
-							texture: asset_server.load("goal.png"),
-							transform: Transform::from_xyz(592.0,0.0,3.0),
+							texture: asset_server.load("goal_smaller.png"),
+							transform: Transform::from_xyz(592.0,100.0,3.0),
 							..default()
 						}).insert(Background{});
 						commands.spawn()
@@ -320,7 +337,7 @@ fn switch_state(
 								});
 						commands.spawn()
 								.insert_bundle(SpriteBundle{
-								texture: asset_server.load("flipper.png"),
+								texture: asset_server.load("flipper_new.png"),
 								transform: Transform::from_xyz(-512.0,-250.0,3.0),
 								..default()
 								}).insert(Flipper{
@@ -361,13 +378,20 @@ fn switch_state(
 						squished: 0,
 					});
 				},
-				3=>(),
+				3=>{
+					if !folder_open.opened{
+						folder_open.opened=true;
+						commands.insert_resource(NextState(GameState::Folder));
+						ev_despawn.send(DespawnEvent());
+					}
+				},
 				_=>(),
 			}
 		}
 		if keyboard.just_pressed(KeyCode::N){
 			commands.insert_resource(NextState(GameState::InGame));
 			pinball_spawner.spawned=false;
+			folder_open.opened=false;
 			for (ent, ball, bg, bug, flipper) in despawn_query.iter(){
 				if let Some(ball)=ball{
 					commands.entity(ent).despawn();
@@ -430,6 +454,7 @@ fn spawn_bugs(
 ){
 	if spawner.squished >= 10 {
 		//info!("advance story");
+		spawner.squished=0;
 		ev_despawn.send(DespawnEvent());
 	}
 	spawner.timer=spawner.timer-17;
@@ -458,23 +483,23 @@ fn pinball_move(
 			const GRAV: f32 = 10.0;
 			phys.delta_y -= GRAV * phys.gravity;
 			if transform.translation.y <= (-1.0*SCREEN_HEIGHT/2.0) +(object.size.y/2.0){
-				phys.delta_y = -1.0*phys.delta_y*0.25;
+				phys.delta_y = -1.0*phys.delta_y*0.4;
 				ball.is_grounded=true;
 			}
 			else{
 				ball.is_grounded=false;
 			}
 			if transform.translation.y >= (1.0*SCREEN_HEIGHT/2.0) -(object.size.y/2.0){
-				phys.delta_y = -1.0*phys.delta_y*0.25;
+				phys.delta_y = -1.0*phys.delta_y*0.4;
 			}
 			if transform.translation.x >= (1.0*SCREEN_WIDTH/2.0) -(object.size.x/2.0){
-				phys.delta_x = -1.0*phys.delta_x*0.25;
+				phys.delta_x = -1.0*phys.delta_x*0.4;
 			}
 			if transform.translation.x <= (-1.0*SCREEN_WIDTH/2.0) +(object.size.x/2.0){
-				phys.delta_x = -1.0*phys.delta_x*0.25;
+				phys.delta_x = -1.0*phys.delta_x*0.4;
 			}
 			//info!("player trans x:{} y:{} z:{}",transform.translation.x,transform.translation.y,transform.translation.z);
-			if (transform.translation.x>=544.0 && transform.translation.x<=640.0) && (transform.translation.y>=-110.0 && transform.translation.y<=110.0){
+			if (transform.translation.x>=544.0 && transform.translation.x<=640.0) && (transform.translation.y>=26.0 && transform.translation.y<=174.0) && pinball_spawner.spawned{
 				//info!("amogus");
 				pinball_spawner.spawned=false;
 				ev_despawn.send(DespawnEvent());
@@ -482,8 +507,12 @@ fn pinball_move(
 			}
 			transform.translation.x += FRAMERATE*phys.delta_x;
 			transform.translation.y += FRAMERATE*phys.delta_y;
+			transform.rotate_local_z((std::f32::consts::PI/180.0)*phys.delta_omega*FRAMERATE);
+			
+			
 			if ball.is_grounded{
 				phys.delta_x *= FRICTION_SCALE;
+				phys.delta_omega *=0.9;
 			}
 			transform.translation = inbounds(transform.translation, object.size);
 	}
@@ -515,8 +544,9 @@ fn pinball_collide(
 	mut flipper_query: Query<(&mut Flipper, &mut Shape)>,
 ){
 	const FRAMERATE: f32 = 1.0/60.0;
-	const LAUNCH: f32 = 10.0;
-	const LAUNCH_OTHER: f32 = 2.0;
+	const LAUNCH: f32 = 7.0;
+	const ROTATE_LAUNCH: f32 = 10.0;
+	const LAUNCH_OTHER: f32 = 1.5;
 	const X_MAX_VEL: f32 = 200.0;
 	const Y_MAX_VEL: f32 = 200.0;
 	for (mut ball_transform, mut phys) in ball_query.iter_mut(){
@@ -531,7 +561,8 @@ fn pinball_collide(
 			//info!("omega: {}", flipper.delta_omega);
 			phys.delta_x+=1.0*LAUNCH_OTHER*phys.delta_x*norm_c.x + -1.0*LAUNCH*flipper.delta_omega*norm_c.x;
 			phys.delta_y+=1.0*LAUNCH_OTHER*phys.delta_y*norm_c.y + -1.0*LAUNCH*flipper.delta_omega*norm_c.y;
-
+			phys.delta_omega+=norm_c.angle_between(Vec2::Y)*ROTATE_LAUNCH;
+	
 			ball_transform.translation.x += FRAMERATE*phys.delta_x;
 			ball_transform.translation.y += FRAMERATE*phys.delta_y;
 			
