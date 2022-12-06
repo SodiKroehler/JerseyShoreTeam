@@ -138,7 +138,7 @@ fn open_email(mut commands: Commands,
             parent.spawn_bundle(TextBundle::from_section(
                 "Enter",
                 TextStyle {
-                    font: asset_server.load("Jersey.ttf"),
+                    font: asset_server.load(CONSTANTS::FONT_FILE),
                     font_size: 20.0,
                     color: CONSTANTS::BACKGROUND,
                 },
@@ -163,7 +163,7 @@ fn open_email(mut commands: Commands,
             parent.spawn_bundle(TextBundle::from_section(
                 "Jersey Shore Super Email",
                 TextStyle {
-                    font: asset_server.load("Jersey.ttf"),
+                    font: asset_server.load(CONSTANTS::FONT_FILE),
                     font_size: 20.0,
                     color: CONSTANTS::BACKGROUND,
                 },
@@ -189,7 +189,7 @@ fn open_email(mut commands: Commands,
                     // "C::/UsersBratwurstIII/Documents",
                     String::from(r"Please enter your password\:"),
                     TextStyle {
-                        font: asset_server.load("Jersey.ttf"),
+                        font: asset_server.load(CONSTANTS::FONT_FILE),
                         font_size: 20.0,
                         color: Color::BLACK,
                     },
@@ -214,7 +214,7 @@ fn open_email(mut commands: Commands,
                 parent.spawn_bundle(TextBundle::from_section(
                     "",
                     TextStyle {
-                        font: asset_server.load("Jersey.ttf"),
+                        font: asset_server.load(CONSTANTS::FONT_FILE),
                         font_size: 20.0,
                         color: Color::BLACK,
                     },
@@ -353,7 +353,7 @@ fn open_docs(mut commands: Commands, asset_server: Res<AssetServer>){
         parent.spawn_bundle(TextBundle::from_section(
             "My Documents",
             TextStyle {
-                font: asset_server.load("Jersey.ttf"),
+                font: asset_server.load(CONSTANTS::FONT_FILE),
                 font_size: 20.0,
                 color: Color::BLACK,
                 // color: CONSTANTS::BACKGROUND,
@@ -379,7 +379,7 @@ fn open_docs(mut commands: Commands, asset_server: Res<AssetServer>){
         parent.spawn_bundle(TextBundle::from_section(
             r"C:\\Users\\Bratwurst III\\My Documents",
             TextStyle {
-                font: asset_server.load("Jersey.ttf"),
+                font: asset_server.load(CONSTANTS::FONT_FILE),
                 font_size: 20.0,
                 color: Color::BLACK,
             },
@@ -422,7 +422,7 @@ fn open_docs(mut commands: Commands, asset_server: Res<AssetServer>){
         parent.spawn_bundle(TextBundle::from_section(
             "my_super_secret_document.txt",
             TextStyle {
-                font: asset_server.load("Jersey.ttf"),
+                font: asset_server.load(CONSTANTS::FONT_FILE),
                 font_size: 20.0,
                 color: Color::BLACK,
             },
@@ -482,7 +482,7 @@ fn open_docs(mut commands: Commands, asset_server: Res<AssetServer>){
         parent.spawn_bundle(TextBundle::from_section(
             "babyfido.png",
             TextStyle {
-                font: asset_server.load("Jersey.ttf"),
+                font: asset_server.load(CONSTANTS::FONT_FILE),
                 font_size: 20.0,
                 color: Color::BLACK,
             },
@@ -569,21 +569,22 @@ fn open_fanfic(mut commands: Commands,
 in fair Seaside Heights, New Jersey, 
 where we lay our scene.",
                                     TextStyle {
-                                        font: asset_server.load("Jersey.ttf"),
+                                        font: asset_server.load(CONSTANTS::FONT_FILE),
                                         font_size: 20.0,
                                         color: Color::BLACK,
                                     },
                                 ),
                                 TextSection::new(
-                                    "Where ancient grudges were formed by the minute, 
+                                    "
+ Where ancient grudges were formed by the minute, 
 and feuds broke across the eight who lived there.",
                                     TextStyle {
-                                        font: asset_server.load("Jersey.ttf"),
+                                        font: asset_server.load(CONSTANTS::FONT_FILE),
                                         font_size: 20.0,
                                         color: Color::BLACK,
                                     },
                                 ),
-                            ]).with_text_alignment(TextAlignment::Left))
+                            ]).with_text_alignment(TextAlignment::TOP_LEFT))
                             .insert(Documents)
                             .insert(Fanfic)
                             .insert(FilePreview);

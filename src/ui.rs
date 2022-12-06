@@ -77,7 +77,7 @@ fn spawn_xp_ui_elems(mut commands: Commands, asset_server: Res<AssetServer>){
             parent.spawn_bundle(TextBundle::from_section(
                 "Start",
                 TextStyle {
-                    font: asset_server.load("Jersey.ttf"),
+                    font: asset_server.load(CONSTANTS::FONT_FILE),
                     font_size: 20.0,
                     color: Color::WHITE,
                 },
@@ -105,7 +105,7 @@ fn spawn_xp_ui_elems(mut commands: Commands, asset_server: Res<AssetServer>){
                 parent.spawn_bundle(TextBundle::from_section(
                     "0.00",
                     TextStyle {
-                        font: asset_server.load("Jersey.ttf"),
+                        font: asset_server.load(CONSTANTS::FONT_FILE),
                         font_size: 20.0,
                         color: Color::WHITE,
                     },
@@ -200,7 +200,7 @@ fn enter_paused(mut commands: Commands,
             parent.spawn_bundle(TextBundle::from_section(
                 "Play!",
                 TextStyle {
-                    font: asset_server.load("Jersey.ttf"),
+                    font: asset_server.load(CONSTANTS::FONT_FILE),
                     font_size: 40.0,
                     color: Color::WHITE,
                 },

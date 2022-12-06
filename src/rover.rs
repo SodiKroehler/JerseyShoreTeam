@@ -214,7 +214,7 @@ fn setup_rover(mut commands: Commands, mut loading: ResMut<AssetsLoading>, asset
             TextBundle::from_section(
                 "Ask Me Anything!",
                 TextStyle {
-                    font: asset_server.load("Jersey.ttf"),
+                    font: asset_server.load(CONSTANTS::FONT_FILE),
                     font_size: 20.0,
                     color: Color::WHITE,
                 },
@@ -247,7 +247,7 @@ fn chat_update(
                 TextSection::new(
                     current_speaker,
                     TextStyle {
-                        font: asset_server.load("Jersey.ttf"),
+                        font: asset_server.load(CONSTANTS::FONT_FILE),
                         font_size: 20.0,
                         color: Color::GOLD,
                     },
@@ -255,7 +255,7 @@ fn chat_update(
                 TextSection::new(
                     &sp.val,
                     TextStyle {
-                        font: asset_server.load("Jersey.ttf"),
+                        font: asset_server.load(CONSTANTS::FONT_FILE),
                         font_size: 20.0,
                         color: Color::WHITE,
                     },
@@ -327,7 +327,7 @@ fn open_rover(
                 TextSection::new(
                     current_speaker,
                     TextStyle {
-                        font: asset_server.load("Jersey.ttf"),
+                        font: asset_server.load(CONSTANTS::FONT_FILE),
                         font_size: 20.0,
                         color: Color::GOLD,
                     },
@@ -335,7 +335,7 @@ fn open_rover(
                 TextSection::new(
                     "Hello! ".to_owned(),
                     TextStyle {
-                        font: asset_server.load("Jersey.ttf"),
+                        font: asset_server.load(CONSTANTS::FONT_FILE),
                         font_size: 20.0,
                         color: Color::WHITE,
                     },
