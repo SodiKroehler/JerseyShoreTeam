@@ -31,7 +31,17 @@ enum FileButton {
 }
 
 #[derive(Component)]
+struct Fanfic;
+
+#[derive(Component)]
+struct FidoTheDog;
+
+#[derive(Component)]
 struct Documents;
+
+
+#[derive(Component)]
+struct FilePreview;
 
 
 impl Plugin for ExtraFoldersPlugin {
@@ -43,10 +53,10 @@ impl Plugin for ExtraFoldersPlugin {
            .add_enter_system(GameState::Folder, open_docs) 
            .add_exit_system(GameState::Folder, close_docs) 
            .add_system(handle_email_password.run_in_state(GameState::Email))                                     
-           .add_system(handle_close_button
-                            .run_in_state(GameState::Email)                                      
-                            .run_in_state(GameState::Folder))                                      
+           .add_system(handle_close_button.run_in_state(GameState::Folder))                                      
            .add_system(handle_close_button.run_in_state(GameState::Email))                                      
+           .add_system(open_photo.run_in_state(GameState::Folder))                                      
+           .add_system(open_fanfic.run_in_state(GameState::Folder))                                      
            .add_system(handle_email_button.run_in_state(GameState::InGame));                                      
     }
 }
@@ -130,7 +140,7 @@ fn open_email(mut commands: Commands,
                 TextStyle {
                     font: asset_server.load("Jersey.ttf"),
                     font_size: 20.0,
-                    color: CONSTANTS::c(String::from("FCF8ED")),
+                    color: CONSTANTS::BACKGROUND,
                 },
             ));
         }).insert(Email);
@@ -141,8 +151,8 @@ fn open_email(mut commands: Commands,
             style: Style {
                 position_type: PositionType::Absolute,
                 position: UiRect {
-                    left: Val::Px(489.0), //400 too left
-                    bottom: Val::Px(425.0), //415 too low
+                    left: Val::Px(489.0), 
+                    bottom: Val::Px(425.0),
                     ..default()
                 },
                 ..default()
@@ -261,7 +271,6 @@ fn handle_close_button(mut commands: Commands,
                     (Changed<Interaction>, With<CloseButton>)>,){
 
     for interaction in &mut inter_query {
-        info!("close clicked");
         match *interaction {
             Interaction::Clicked => {
                 commands.insert_resource(NextState(GameState::InGame));
@@ -300,13 +309,13 @@ fn open_docs(mut commands: Commands, asset_server: Res<AssetServer>){
     //portal frame
     commands.spawn_bundle(SpriteBundle {
         texture: asset_server.load("window.png"),
-        transform: Transform::from_xyz(0.0, 0.0, z_offset+1.0),
+        transform: Transform::from_xyz(0.0, 4.0, z_offset+1.0),
         sprite: Sprite{
             custom_size: Some(Vec2::new(900.0 - 50.0, 718.0-50.0)),
             ..default()
         },
         ..default()
-    }).insert(EmailButton);
+    }).insert(Documents);
 
       //close button
     commands.spawn_bundle(ButtonBundle {
@@ -315,8 +324,8 @@ fn open_docs(mut commands: Commands, asset_server: Res<AssetServer>){
             size: Size::new(Val::Px(40.0), Val::Px(40.0)),
             position_type: PositionType::Absolute,
             position: UiRect {
-                right: Val::Px(100.0),
-                top: Val::Px(0.0),
+                right: Val::Px(215.0),
+                top: Val::Px(20.0),
                 ..default()
             },
             ..default()
@@ -332,8 +341,8 @@ fn open_docs(mut commands: Commands, asset_server: Res<AssetServer>){
         style: Style {
             position_type: PositionType::Absolute,
             position: UiRect {
-                left: Val::Px(100.0), //400 too left
-                top: Val::Px(1.0), //415 too low
+                left: Val::Px(225.0),
+                top: Val::Px(30.0),
                 ..default()
             },
             ..default()
@@ -358,8 +367,8 @@ fn open_docs(mut commands: Commands, asset_server: Res<AssetServer>){
         style: Style {
             position_type: PositionType::Absolute,
             position: UiRect {
-                left: Val::Px(150.0), 
-                top: Val::Px(25.0), 
+                left: Val::Px(235.0), 
+                top: Val::Px(79.0), 
                 ..default()
             },
             ..default()
@@ -368,7 +377,7 @@ fn open_docs(mut commands: Commands, asset_server: Res<AssetServer>){
         ..default()
     }).with_children(|parent| {
         parent.spawn_bundle(TextBundle::from_section(
-            String::from("C:\\Users\\Bratwurst III\\My Documents"),
+            r"C:\\Users\\Bratwurst III\\My Documents",
             TextStyle {
                 font: asset_server.load("Jersey.ttf"),
                 font_size: 20.0,
@@ -379,12 +388,12 @@ fn open_docs(mut commands: Commands, asset_server: Res<AssetServer>){
 
      //fanfic button
      commands.spawn_bundle(ButtonBundle {
-        transform: Transform::from_xyz(0.,0., CONSTANTS::Z_UI+1.0),
+        transform: Transform::from_xyz(0.,0.,  z_offset+5.0),
         style: Style {
             size: Size::new(Val::Px(40.0), Val::Px(40.0)),
             position_type: PositionType::Absolute,
             position: UiRect {
-                left: Val::Px(340.0),
+                left: Val::Px(320.0),
                 bottom: Val::Px(500.0),
                 ..default()
             },
@@ -392,33 +401,59 @@ fn open_docs(mut commands: Commands, asset_server: Res<AssetServer>){
         },
         image:UiImage(asset_server.load("file_icon.png")),
         ..default()
-    }).insert(FileButton::Text).insert(Documents);
+    }).insert(Fanfic).insert(Documents);
 
-     //audio button
-     commands.spawn_bundle(ButtonBundle {
-        transform: Transform::from_xyz(0.,0., CONSTANTS::Z_UI+1.0),
+    //fanfic button description
+    commands.spawn_bundle(ButtonBundle {
+        transform: Transform::from_xyz(0.,0.,  z_offset+5.0),
         style: Style {
             size: Size::new(Val::Px(40.0), Val::Px(40.0)),
             position_type: PositionType::Absolute,
             position: UiRect {
-                right: Val::Px(400.0),
-                bottom: Val::Px(500.0),
+                left: Val::Px(260.0),
+                bottom: Val::Px(450.0),
                 ..default()
             },
             ..default()
         },
-        image:UiImage(asset_server.load("music_icon.png")),
+        color: bevy::prelude::UiColor(Color::rgba(0.0,0.0,0.0,0.0)),
         ..default()
-    }).insert(FileButton::Audio).insert(Documents);
+    }).with_children(|parent| {
+        parent.spawn_bundle(TextBundle::from_section(
+            "my_super_secret_document.txt",
+            TextStyle {
+                font: asset_server.load("Jersey.ttf"),
+                font_size: 20.0,
+                color: Color::BLACK,
+            },
+        ));
+    }).insert(Documents);
+
+    //  //audio button
+    //  commands.spawn_bundle(ButtonBundle {
+    //     transform: Transform::from_xyz(0.,0., CONSTANTS::Z_UI+1.0),
+    //     style: Style {
+    //         size: Size::new(Val::Px(40.0), Val::Px(40.0)),
+    //         position_type: PositionType::Absolute,
+    //         position: UiRect {
+    //             left: Val::Px(400.0),
+    //             bottom: Val::Px(500.0),
+    //             ..default()
+    //         },
+    //         ..default()
+    //     },
+    //     image:UiImage(asset_server.load("music_icon.png")),
+    //     ..default()
+    // }).insert(FileButton::Audio).insert(Documents);
 
     //open fido button
     commands.spawn_bundle(ButtonBundle {
-        transform: Transform::from_xyz(0.,0., CONSTANTS::Z_UI+1.0),
+        transform: Transform::from_xyz(0.,0.,  z_offset+5.0),
         style: Style {
             size: Size::new(Val::Px(40.0), Val::Px(40.0)),
             position_type: PositionType::Absolute,
             position: UiRect {
-                right: Val::Px(460.0),
+                left: Val::Px(480.0),
                 bottom: Val::Px(500.0),
                 ..default()
             },
@@ -426,13 +461,145 @@ fn open_docs(mut commands: Commands, asset_server: Res<AssetServer>){
         },
         image:UiImage(asset_server.load("file_icon.png")),
         ..default()
-    }).insert(FileButton::Picture).insert(Documents);
+    }).insert(FidoTheDog).insert(Documents);
+
+    //fido button description
+    commands.spawn_bundle(ButtonBundle {
+        transform: Transform::from_xyz(0.,0.,  z_offset+5.0),
+        style: Style {
+            size: Size::new(Val::Px(40.0), Val::Px(40.0)),
+            position_type: PositionType::Absolute,
+            position: UiRect {
+                left: Val::Px(480.0),
+                bottom: Val::Px(450.0),
+                ..default()
+            },
+            ..default()
+        },
+        color: bevy::prelude::UiColor(Color::rgba(0.0,0.0,0.0,0.0)),
+        ..default()
+    }).with_children(|parent| {
+        parent.spawn_bundle(TextBundle::from_section(
+            "babyfido.png",
+            TextStyle {
+                font: asset_server.load("Jersey.ttf"),
+                font_size: 20.0,
+                color: Color::BLACK,
+            },
+        ));
+    }).insert(Documents);
 }
 
 fn close_docs(mut commands: Commands,
-    q : Query<Entity, With<Documents>>){
+    q: Query<Entity, With<Documents>>){
 
     for ent in q.iter() {
         commands.entity(ent).despawn_recursive();    
+    }
+}
+fn open_photo(mut commands: Commands,  
+    mut inter_query: Query<&Interaction,
+    (Changed<Interaction>, With<FidoTheDog>)>,
+    asset_server: Res<AssetServer>,
+    q : Query<Entity, (With<Fanfic>, With<FilePreview>)>){
+
+    for interaction in &mut inter_query {
+        match *interaction {
+            Interaction::Clicked => {
+            // info!("{:?}", ent.get_type_info());
+            commands.spawn_bundle(SpriteBundle {
+                    texture: asset_server.load("fidoTheDog.png"),
+                    transform: Transform::from_xyz(200.0, -50.0, z_offset+5.0),
+                    sprite: Sprite{
+                        custom_size: Some(Vec2::new(350.0,350.0)),
+                        ..default()
+                    },
+                    ..default()
+                }).insert(Documents)
+                    .insert(FidoTheDog)
+                    .insert(FilePreview);  
+
+                for ent in q.iter() {
+                    commands.entity(ent).despawn_recursive();    
+                }
+            }
+            Interaction::Hovered => {
+            // *color = HOVERED_BUTTON.into();
+            }
+            Interaction::None => {
+                //  *color = XP_BLUE.into();
+            }
+        }
+    }
+}
+
+fn open_fanfic(mut commands: Commands,  
+    mut inter_query: Query<&Interaction,
+    (Changed<Interaction>, With<Fanfic>)>,
+    asset_server: Res<AssetServer>,
+    q : Query<Entity, (With<FidoTheDog>, With<FilePreview>)>){
+
+    for interaction in &mut inter_query {
+        match *interaction {
+            Interaction::Clicked => {
+                commands.spawn_bundle(
+                    NodeBundle{ 
+                        transform: Transform::from_xyz(0.0, 0.0, z_offset+5.0),
+                        color: CONSTANTS::uicolor(CONSTANTS::CLOSE_RED),
+                        style: Style {
+                            // size: Size::new(Val::Px(100.0), Val::Px(200.0)),
+                            position_type: PositionType::Absolute,
+                            justify_content: JustifyContent::FlexStart,
+                            overflow: Overflow::Visible,
+                            flex_wrap: FlexWrap::WrapReverse,
+                            position: UiRect {
+                                bottom: Val::Px(100.0),
+                                right: Val::Px(250.0),
+                                left: Val::Px(655.0),
+                                top: Val::Px(150.0),
+                            },
+                            ..default()
+                        },
+                        ..default()
+                    }).with_children(|parent|{ 
+                        parent.spawn_bundle(
+                            TextBundle::from_sections([
+                                TextSection::new(
+                                    "A single household, without much dignity, in fair 
+Seaside Heights, New Jersey, where we lay our scene.
+",
+                                    TextStyle {
+                                        font: asset_server.load("Jersey.ttf"),
+                                        font_size: 20.0,
+                                        color: Color::BLACK,
+                                    },
+                                ),
+                                TextSection::new(
+                                    "Where ancient grudges were formed by the minute, and 
+feuds broke across the eight who lived there.".to_owned(),
+                                    TextStyle {
+                                        font: asset_server.load("Jersey.ttf"),
+                                        font_size: 20.0,
+                                        color: Color::BLACK,
+                                    },
+                                ),
+                            ]).with_alignment(TextAlignment::CENTER))
+                            .insert(Documents)
+                            .insert(Fanfic)
+                            .insert(FilePreview);
+                        }).insert(Documents)
+                            .insert(Fanfic)
+                            .insert(FilePreview);
+                for ent in q.iter() {
+                    commands.entity(ent).despawn_recursive();    
+                }
+            }
+            Interaction::Hovered => {
+            // *color = HOVERED_BUTTON.into();
+            }
+            Interaction::None => {
+                //  *color = XP_BLUE.into();
+            }
+        }
     }
 }

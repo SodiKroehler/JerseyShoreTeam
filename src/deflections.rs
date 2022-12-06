@@ -8,17 +8,11 @@ use super::GameState;
 use super::rover::RoverState;
 use super::rover::LastChat;
 use super::CONSTANTS;
-use super::rover::Dict;
+use super::rover::{DeflectDict, Dictionaries};
 
 #[derive(Default)]
 pub struct Password{
     pub val: String,
-}
-
-#[derive(Serialize, Deserialize)]
-struct Deflection{
-    answer: String,
-    vector: Vec<u32>,
 }
 
 pub enum DeflectionType{
@@ -97,22 +91,29 @@ fn check_for_funny_values(mut commands: Commands,
 
 }
 
-pub fn generate_deflection(d:DeflectionType) ->String{
+pub fn generate_deflection(d:DeflectionType,
+                            handles: &Res<Dictionaries>,
+                            deflect_dict: &ResMut<Assets<DeflectDict>>) ->String{
 
     let mut rng = rand::thread_rng();
 
-    let raw_deflect_dict: String = fs::read_to_string("./assets/deflections.json").unwrap();
-    let dict = serde_json::from_str::<Dict<Deflection>>(&raw_deflect_dict).unwrap();
+    // let raw_deflect_dict: String = fs::read_to_string("./assets/deflections.json").unwrap();
+    // let dict = serde_json::from_str::<Dict<Deflection>>(&raw_deflect_dict).unwrap();
 
+    if let Some(dict) = deflect_dict.get(&handles.deflect_dict) {
 
-    match d{
-        DeflectionType::NoMatch => {
-            let rand_idx = rng.gen_range(3..7);
-            return dict.items[rand_idx].answer.clone();
+        match d{
+            DeflectionType::NoMatch => {
+                let rand_idx = rng.gen_range(3..7);
+                return dict.items[rand_idx].answer.clone();
+            }
+            DeflectionType::StageTooLow => {
+                let rand_idx = rng.gen_range(0..3);
+                return dict.items[rand_idx].answer.clone();
+            }
         }
-        DeflectionType::StageTooLow => {
-            let rand_idx = rng.gen_range(0..3);
-            return dict.items[rand_idx].answer.clone();
-        }
+    }else {
+        info!("i have no idea what to do ");
+        return String::from("oh no, i shall now do the panic dance");
     }
 }

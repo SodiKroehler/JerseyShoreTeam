@@ -1,0 +1,60 @@
+{
+     "items": [
+          { 
+               "answer": "*Yawn* I don't know about that one...try me again after my nap.",
+               "vector": [
+                    0,
+                    0,
+                    0
+               ]
+          },
+          {
+               "answer": "I think you can figure that one out yourself.",
+               "vector": [
+                    0,
+                    0,
+                    0
+               ]
+          },
+          { 
+               "answer": "If I told you that this would be too easy.",
+               "vector": [
+                    0,
+                    0,
+                    0
+               ]
+          },
+          { 
+               "answer": "I don't really understand the question.",
+               "vector": [
+                    0,
+                    0,
+                    0
+               ]
+          },
+          { 
+               "answer": "Could you try to rephrase that.",
+               "vector": [
+                    0,
+                    0,
+                    0
+               ]
+          },
+          { 
+               "answer": "I'm sorry my speaky thingy kinda borken.",
+               "vector": [
+                    0,
+                    0,
+                    0
+               ]
+          },
+          { 
+               "answer": "Huh? Can you say that again?",
+               "vector": [
+                    0,
+                    0,
+                    0
+               ]
+          }
+     ]
+}

@@ -7,6 +7,7 @@ use std::io::{prelude::*, Write, BufReader};
 use serde::{Deserialize, Serialize};
 use bevy::prelude::*;
 use iyes_loopless::prelude::*;
+use bevy_common_assets::json::JsonAssetPlugin;
 // use stop_words;
 
 
@@ -32,6 +33,7 @@ pub struct RoverPlugin;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum RoverState {
     Inactive,
+    Loading,
     Listening,
     Thinking,
     Talking,
@@ -65,24 +67,70 @@ pub struct LastChat{
 }
 
 #[derive(Serialize, Deserialize)]
-struct Question{
-    id: isize,
-    question: String,
-    answer: String,
-    vector: Vec<f64>,
-    priority: isize,
+// #[derive(Default, serde::Deserialize, bevy::reflect::TypeUuid)]
+// #[uuid = "413be529-bfeb-41b3-9db0-4b8b380a2c47"]
+pub struct Question{
+    pub id: isize,
+    pub question: String,
+    pub answer: String,
+    pub vector: Vec<f64>,
+    pub priority: isize,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Dict <T>{
-    pub items: Vec<T>
+#[derive(Serialize, Deserialize)]
+pub struct Deflection{
+    pub answer: String,
+    pub vector: Vec<u32>,
 }
+
+// #[derive(Serialize, Deserialize, Debug)]
+#[derive(Default, serde::Deserialize, bevy::reflect::TypeUuid)]
+#[uuid = "413be529-bfeb-41b3-9db0-4b8b380a2c48"]
+pub struct Q_Dict{
+    pub items: Vec<Question>,
+}
+
+#[derive(Default, serde::Deserialize, bevy::reflect::TypeUuid)]
+#[uuid = "413be529-bfeb-41b3-9db0-4b8b380a2c49"]
+pub struct WordMap{
+    pub itemz: HashMap<String, isize>,
+}
+
+#[derive(Default, serde::Deserialize, bevy::reflect::TypeUuid)]
+#[uuid = "413be529-bfeb-41b3-9db0-4b8b380a2c50"]
+
+pub struct Weights {
+    pub items: Vec<Vec<f64>>,
+}
+
+// #[derive(Serialize, Deserialize, Debug)]
+#[derive(Default, serde::Deserialize, bevy::reflect::TypeUuid)]
+#[uuid = "413be529-bfeb-41b3-9db0-4b8b380a2c51"]
+pub struct DeflectDict{ 
+    pub items: Vec<Deflection>
+}
+
+#[derive(Default)]
+struct AssetsLoading {
+    items: Vec<HandleUntyped>,
+}
+
+
+#[derive(Default)]
+pub struct Dictionaries {
+    pub q_dict: Handle<Q_Dict>,
+    pub w2i_dict: Handle<WordMap>,
+    pub weight_dict: Handle<Weights>,
+    pub deflect_dict: Handle<DeflectDict>,
+}
+
 
 impl Plugin for RoverPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_startup_system(setup_rover)
-            .add_loopless_state(RoverState::Listening)
+            .add_loopless_state(RoverState::Loading)
+            .add_system(check_if_loaded.run_in_state(RoverState::Loading))
             .add_enter_system(GameState::Rover, open_rover)
             .add_exit_system(GameState::Rover, close_rover)
             .add_system(
@@ -94,18 +142,60 @@ impl Plugin for RoverPlugin {
             .add_enter_system(RoverState::Talking, chat_update)
             // .add_plugin(WorldInspectorPlugin::new())
             // .add_system(handle_user_input_focus.run_not_in_state(GameState::Rover))
+            .add_plugin(JsonAssetPlugin::<WordMap>::new(&["w2idict"]))
+            .add_plugin(JsonAssetPlugin::<DeflectDict>::new(&["ddict"]))
+            .add_plugin(JsonAssetPlugin::<Weights>::new(&["wdict"]))
+            .add_plugin(JsonAssetPlugin::<Q_Dict>::new(&["qdict"]))
+            .insert_resource(AssetsLoading {items: Vec::new()})
             .insert_resource(LastChat {name : "Rover:".to_string(),
                                         val : "".to_string()});  
                                         
     }
 }
 
-fn setup_rover(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn check_if_loaded(mut commands: Commands,
+    server: Res<AssetServer>,
+    loading: Res<AssetsLoading>){
+
+    use bevy::asset::LoadState;
+
+    match server.get_group_load_state(loading.items.iter().map(|h| h.id)) {
+        LoadState::Failed => {
+            info!("Problem loading asset")
+        }
+        LoadState::Loaded => {
+            info!("loaded all assets");
+            commands.remove_resource::<AssetsLoading>();
+            commands.insert_resource(NextState(RoverState::Listening));
+        }
+        _ => {
+            // info!("still waitin on assets");
+        }
+    }
+}
+
+
+fn setup_rover(mut commands: Commands, mut loading: ResMut<AssetsLoading>, asset_server: Res<AssetServer>) {
+
+    let q_handle: Handle<Q_Dict> = asset_server.load("6000.qdict");
+    let s_handle: Handle<Weights> = asset_server.load("6000.wdict");
+    let h_handle: Handle<WordMap> = asset_server.load("6000.w2idict");
+    let d_handle: Handle<DeflectDict> = asset_server.load("deflections.ddict");
+    
+    loading.items.push(q_handle.clone_untyped());
+    loading.items.push(s_handle.clone_untyped());
+    loading.items.push(h_handle.clone_untyped());
+    loading.items.push(d_handle.clone_untyped());
+    
+    commands.insert_resource(Dictionaries { q_dict: q_handle,
+                                            w2i_dict: h_handle,
+                                            weight_dict: s_handle,
+                                            deflect_dict: d_handle});
 
     commands.spawn_bundle(
         NodeBundle{
-            // transform: Transform::from_xyz(.0,-350.0,2.0),
             color: Color::rgba(0.0, 0.0, 0.15, 0.45).into(),
+            // transform: Transform::from_xyz(.0,-350.0,2.0),
             style: Style {
                 size: Size::new(Val::Px(200.0), Val::Px(31.0)),
                 align_items: AlignItems::Center,
@@ -137,43 +227,6 @@ fn setup_rover(mut commands: Commands, asset_server: Res<AssetServer>) {
         }).insert(UserInputBoxButton);
     }).insert(UserInputBox);
 }   
-
-
-// fn handle_user_input_focus(mut commands: Commands,
-//     b_query: Query<&Interaction, (Changed<Interaction>, With<UserInputBoxButton>)>,
-//     // itext: Query<(Entity, &Children),With<UserInputBox>>,
-//     mut inter_query: Query<&Interaction, Changed<Interaction>>){ 
-
-//     // let (c_node, c_kids) = itext.single();
-//     let clickable = b_query.single();
-//     // //info!("{:?}", c_kids[1].id());
-//     // let clickable = inter_query.get(c_kids[0]).unwrap();
-
-//     // info!("{:?}", clickable);
-//     match *clickable {
-//         Interaction::Clicked => {
-//             info!("userinputtextclicked");
-//             commands.insert_resource(NextState(GameState::Rover));
-//         }
-//             Interaction::Hovered => {
-//             // *color = HOVERED_BUTTON.into();
-//         }
-//             Interaction::None => {
-//             //  *color = XP_BLUE.into();
-//         }
-//     }
-// }
-
-// fn debug_current_state(state: Res<CurrentState<GameState>>,
-//                         rstate: Res<CurrentState<RoverState>>) {
-//     if (format!("{rstate:?}") == "RoverState::Listening") {
-//         info!("listening");
-//     }
-
-//     if rstate.is_changed() {
-//         println!("Detected state change to {:?}!", rstate);
-//     }
-// }
 
 fn chat_update(
     mut commands: Commands, 
@@ -297,7 +350,8 @@ fn open_rover(
                 custom_size: Some(Vec2::new(20.0,20.0)),
                 ..default()
             },
-            transform: Transform::from_xyz(-270.0,-375.0,2.0),
+            transform: Transform::from_xyz(0.0,0.0, CONSTANTS::Z_UI + 2.0),
+            // transform: Transform::from_xyz(-270.0,-375.0, CONSTANTS::Z_UI + 2.0),
             ..default()
             }).insert(RoverSprite);
     
@@ -367,15 +421,20 @@ fn get_rover_response(
     mut commands: Commands,
     mut msg: ResMut<LastChat>,
     mut stage: ResMut<Stage>,
-    asset_server: Res<AssetServer>){
+    asset_server: Res<AssetServer>,
+    handles: Res<Dictionaries>,
+    w2i: ResMut<Assets<WordMap>>,
+    weights: ResMut<Assets<Weights>>,
+    deflect_dict: ResMut<Assets<DeflectDict>>,
+    q_dict: ResMut<Assets<Q_Dict>>){
     
     let q = msg.val.clone();
 
     // super::deflections::check_for_funny_values(q); will run first
     let parsed = parser(q);
    // let stemmed = stemmer(parsed);
-    let indexed = indexer(parsed);
-    let answer = answerer(indexed, 100, asset_server);
+    let indexed = indexer(parsed, &handles, &w2i, &weights);
+    let answer = answerer(indexed, 100, asset_server, &handles, &q_dict, &deflect_dict);
     msg.val = answer;
     msg.name = "rover: ".to_owned();
     commands.insert_resource(NextState(RoverState::Talking));     
@@ -405,88 +464,117 @@ pub fn parser(input: String) ->Vec<String> {
 // }
 
 //returns a h long vector of the sum of all words
-fn indexer (toks: Vec<String>) -> Vec<f64> {
-    // let mut indexes = Vec::<f64>::new();
-    let raw_dictionary: String = fs::read_to_string("./assets/6000_w2i.json").unwrap();
-    let dict: HashMap<String, isize> = serde_json::from_str(&raw_dictionary).unwrap();
-    
-    let mut ngram = VecDeque::from([1,1,1,1]); // one is not a word
-    let mut sent_embed = vec!(0.0; CONSTANTS::H*4);
-    let mut i : usize = 0;
+fn indexer (toks: Vec<String>,
+            handles: &Res<Dictionaries>,
+            w2i: &ResMut<Assets<WordMap>>, 
+            weights:  &ResMut<Assets<Weights>>) -> Vec<f64> {
 
-    for t in toks.iter(){
-        match dict.get(t){
-            Some(s) => {
-                if i == 0 { //no 3 1's
+    // let raw_dictionary: String = fs::read_to_string("./assets/6000_w2i.json").unwrap();
+    // let dict: HashMap<String, isize> = serde_json::from_str(&raw_dictionary).unwrap();
+    
+    if let Some(dict) = w2i.get(&handles.w2i_dict) {
+
+        let mut ngram = VecDeque::from([1,1,1,1]); // one is not a word
+        let mut sent_embed = vec!(0.0; CONSTANTS::H*4);
+        let mut i : usize = 0;
+
+        for t in toks.iter(){
+            match dict.itemz.get(t){
+                Some(s) => {
+                    if i == 0 { //no 3 1's
+                        ngram.push_back(*s);
+                        ngram.pop_front();
+                        continue;
+                    }
                     ngram.push_back(*s);
                     ngram.pop_front();
-                    continue;
+                    let embed : Vec<f64> = embedder(&ngram, handles, weights); // [1,1, 92]
+                    super::maphs::sum(&mut sent_embed, &embed);
+                    i+=1;
+                }    
+                None => {   
+                    let mut file = OpenOptions::new()
+                        .append(true)
+                        .open("./assets/words_to_add.txt")
+                        .unwrap();
+                    file.write_all(t.as_bytes()).unwrap();
                 }
-                ngram.push_back(*s);
-                ngram.pop_front();
-                let embed : Vec<f64> = embedder(&ngram); // [1,1, 92]
-                super::maphs::sum(&mut sent_embed, &embed);
-                i+=1;
-            }    
-            None => {   
-                let mut file = OpenOptions::new()
-                    .append(true)
-                    .open("./assets/words_to_add.txt")
-                    .unwrap();
-                file.write_all(t.as_bytes()).unwrap();
             }
         }
+        for i in 0..2{ // two more times to flush it out
+            ngram.push_back(1);
+            ngram.pop_front();
+            let embed = embedder(&ngram, handles, weights); // [1,1, 92]
+            super::maphs::sum(&mut sent_embed, &embed);
+        }   
+        return sent_embed;
+    } else {
+        info!("i have no idea what to");
+        return vec![0.0];
     }
-    for i in 0..2{ // two more times to flush it out
-        ngram.push_back(1);
-        ngram.pop_front();
-        let embed = embedder(&ngram); // [1,1, 92]
-        super::maphs::sum(&mut sent_embed, &embed);
-    }   
-    return sent_embed;
 }
 
 
-fn embedder(ngram: &VecDeque<isize>) -> Vec<f64>{
+fn embedder(ngram: &VecDeque<isize>,             
+    handles: &Res<Dictionaries>,
+    raw_weights: &ResMut<Assets<Weights>>) -> Vec<f64>{
 
-    let mut raw_weights: String = fs::read_to_string("./assets/6000_weights.json").unwrap();
-    let mut weights: Vec<Vec<f64>> = serde_json::from_str(&raw_weights).unwrap();
+    // let mut raw_weights: String = fs::read_to_string("./assets/6000_weights.json").unwrap();
+    // let mut weights: Vec<Vec<f64>> = serde_json::from_str(&raw_weights).unwrap();
 
-    let mut token_embed = vec![0.0];
-    let mut index = 0;
-    token_embed.pop();
+    if let Some(weights) = raw_weights.get(&handles.weight_dict) {
 
-    for t in ngram.iter(){
-        let word_embed = &weights[*t as usize];
-        for w in word_embed.iter(){
-            token_embed.push(*w);
+        let mut token_embed = vec![0.0];
+        let mut index = 0;
+        token_embed.pop();
+
+        for t in ngram.iter(){
+            let word_embed = &weights.items[*t as usize];
+            for w in word_embed.iter(){
+                token_embed.push(*w);
+            }
         }
-    }
 
-    return token_embed;
+        return token_embed;
+    } else {
+        info!("weird resource issue in embedder");
+        return vec![0.0];
+    }
 }
 
 
 fn answerer(idxs: Vec<f64>,
             stage: isize,
-            asset_server: Res<AssetServer> ) -> String{
+            asset_server: Res<AssetServer>,
+            handles: &Res<Dictionaries>,
+            q_dict: &ResMut<Assets<Q_Dict>>,
+            deflect_dict: &ResMut<Assets<DeflectDict>>) -> String{
     // let mut raw_qa_list = asset_server.load("questions_answers.json");
-    let raw_qa_list: String = fs::read_to_string("./assets/6000_qa_list.json").unwrap();
-    let qa_json = serde_json::from_str::<Dict<Question>>(&raw_qa_list).unwrap();
-    let mut closest_answer: String = String::from("");
-    let mut least_distance = 0.0;
-    for p in qa_json.items.iter() {
-        let dist = maphs::cos_distance(&idxs, &p.vector);
-        // info!("l:{:?}d:{:?}", least_distance, dist);
-        if dist > least_distance && p.priority <= stage {
-            least_distance = dist;
-            closest_answer = p.answer.clone()}
+    // let raw_qa_list: String = fs::read_to_string("./assets/6000_qa_list.json").unwrap();
+    // let qa_json = serde_json::from_str::<Dict<Question>>(&raw_qa_list).unwrap();
+    
+    if let Some(qa_json) = q_dict.get(&handles.q_dict) {
+
+        let mut closest_answer: String = String::from("");
+        let mut least_distance = 0.0;
+        for p in qa_json.items.iter() {
+            let dist = maphs::cos_distance(&idxs, &p.vector);
+            // info!("l:{:?}d:{:?}", least_distance, dist);
+            if dist > least_distance && p.priority <= stage {
+                least_distance = dist;
+                closest_answer = p.answer.clone()}
+        }
+        if least_distance < CONSTANTS::COS_DIST_THRESHOLD {
+            info!("{} confidence, sending deflection", least_distance);
+            info!("Question was closest to {}", closest_answer);
+            return super::deflections::generate_deflection(
+                                super::deflections::DeflectionType::NoMatch, 
+                                handles,deflect_dict)
+        }
+        return closest_answer;
+    }else {
+        info!("resource loading issue");
+        return String::from("um my guts are falling out");
     }
-    if least_distance < CONSTANTS::COS_DIST_THRESHOLD {
-        info!("{} confidence, sending deflection", least_distance);
-        info!("Question was closest to {}", closest_answer);
-        return super::deflections::generate_deflection(super::deflections::DeflectionType::NoMatch)
-    }
-    return closest_answer;
 }
 
