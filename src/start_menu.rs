@@ -1,11 +1,12 @@
 use super::GameState;
+use iyes_loopless::prelude::*;
 use bevy::{prelude::*, app::AppExit};
 type Rect =  bevy::prelude::UiRect<bevy::prelude::Val>;
 
 pub struct MainMenuPlugin;
 
 struct MainMenuData {
-    camera_entity: Entity,
+    //camera_entity: Entity,
     ui_root: Entity,
 }
 
@@ -56,17 +57,16 @@ pub fn button_system(
 }
 
 fn button_press_system(
+    mut commands: Commands,
     buttons: Query<(&Interaction, &MenuButton), (Changed<Interaction>, With<Button>),>,
-    mut state: ResMut<State<GameState>>,
+    state: Res<CurrentState<GameState>>,
     mut exit: EventWriter<AppExit>
 ) {
     for (interaction, button) in buttons.iter() {
         if *interaction == Interaction::Clicked {
             match button {
                 MenuButton::Play => {
-                    state
-                    .set(GameState::InGame)
-                    .expect("Couldn't switch state to InGame");
+                    commands.insert_resource(NextState(GameState::InGame));
                     
                 },
                 MenuButton::Quit => exit.send(AppExit),
@@ -78,10 +78,12 @@ fn button_press_system(
 impl Plugin for MainMenuPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<MenuMaterials>()
-            .add_system(button_system)
-            .add_system(button_press_system)
-            .add_system_set(SystemSet::on_enter(GameState::MainMenu).with_system(setup))
-            .add_system_set(SystemSet::on_exit(GameState::MainMenu).with_system(cleanup));
+            .add_system(button_system.run_in_state((GameState::MainMenu)))
+            .add_system(button_press_system.run_in_state((GameState::MainMenu)))
+            .add_enter_system(GameState::MainMenu,setup)
+            .add_exit_system(GameState::MainMenu,cleanup);
+            //.add_system_set(SystemSet::on_enter(GameState::MainMenu).with_system(setup))
+            //.add_system_set(SystemSet::on_exit(GameState::MainMenu).with_system(cleanup));
     }
 }
 
@@ -161,7 +163,7 @@ fn setup(
     asset_server: Res<AssetServer>,
     materials: Res<MenuMaterials>,
 ) {
-    let camera_entity = commands.spawn_bundle(Camera2dBundle::default()).id();
+    //let camera_entity = commands.spawn_bundle(Camera2dBundle::default()).id();
     //commands.spawn_bundle(UiCameraBundle::default());
     let ui_root = commands
         .spawn_bundle(root(&materials))
@@ -190,12 +192,12 @@ fn setup(
         .id();
 
     commands.insert_resource(MainMenuData {
-        camera_entity,
+        //camera_entity,
         ui_root,
     });
 }
 
 fn cleanup(mut commands: Commands, menu_data: Res<MainMenuData>) {
     commands.entity(menu_data.ui_root).despawn_recursive();
-    commands.entity(menu_data.camera_entity).despawn_recursive();
+    //commands.entity(menu_data.camera_entity).despawn_recursive();
 }

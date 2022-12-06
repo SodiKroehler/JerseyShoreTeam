@@ -121,10 +121,10 @@ fn main() {
 			present_mode: PresentMode::Fifo,
 			..default()
 		})
-		.add_loopless_state(GameState::InGame)
+		.add_loopless_state(GameState::MainMenu)
 		.add_plugins(DefaultPlugins)
 		.add_startup_system(setup)
-		.add_state(GameState::MainMenu)
+		//.add_state(GameState::MainMenu)
 		.add_plugin(MainMenuPlugin)
 		.add_plugin(RoverPlugin)
 		.add_plugin(UiPlugin)
