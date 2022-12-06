@@ -9,10 +9,10 @@ pub const H: usize = 300;
 pub const AMICABILITY: f64 = 100.0;
 pub const COS_DIST_THRESHOLD: f64 = 0.62;
 
-pub fn c (h : String) -> Color {
-    // color: bevy::prelude::UiColor(CONSTANTS::BACKGROUND),
+pub fn uicolor (c: Color) -> UiColor {
+     return bevy::prelude::UiColor(c);
     // info!("XP_BLUE {:?}", Color::hex("357EC7").unwrap());
-    return Color::hex(h).expect("problem reading hex");
+    // return Color::hex(h).expect("problem reading hex");
 }
 
 //z-offsets
