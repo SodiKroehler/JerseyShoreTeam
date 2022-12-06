@@ -85,6 +85,7 @@ static SCREEN_HEIGHT:f32 = 720.0;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum GameState{
+	MainMenu,
 	InGame,
 	Pinball,
 	Jumpscare,
@@ -105,6 +106,8 @@ mod deflections;
 use deflections::DeflectionsPlugin;
 mod extrafolders;
 use extrafolders::ExtraFoldersPlugin;
+mod start_menu;
+use start_menu::MainMenuPlugin;
 
 mod CONSTANTS;
 mod maphs;
@@ -121,6 +124,8 @@ fn main() {
 		.add_loopless_state(GameState::InGame)
 		.add_plugins(DefaultPlugins)
 		.add_startup_system(setup)
+		.add_state(GameState::MainMenu)
+		.add_plugin(MainMenuPlugin)
 		.add_plugin(RoverPlugin)
 		.add_plugin(UiPlugin)
 		.add_plugin(PhysicsPlugin)
