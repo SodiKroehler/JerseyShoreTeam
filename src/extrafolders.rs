@@ -545,7 +545,7 @@ fn open_fanfic(mut commands: Commands,
                 commands.spawn_bundle(
                     NodeBundle{ 
                         transform: Transform::from_xyz(0.0, 0.0, z_offset+5.0),
-                        color: CONSTANTS::uicolor(CONSTANTS::CLOSE_RED),
+                        color: CONSTANTS::uicolor(CONSTANTS::BACKGROUND),
                         style: Style {
                             // size: Size::new(Val::Px(100.0), Val::Px(200.0)),
                             position_type: PositionType::Absolute,
@@ -565,9 +565,9 @@ fn open_fanfic(mut commands: Commands,
                         parent.spawn_bundle(
                             TextBundle::from_sections([
                                 TextSection::new(
-                                    "A single household, without much dignity, in fair 
-Seaside Heights, New Jersey, where we lay our scene.
-",
+                                    "A single household, without much dignity, 
+in fair Seaside Heights, New Jersey, 
+where we lay our scene.",
                                     TextStyle {
                                         font: asset_server.load("Jersey.ttf"),
                                         font_size: 20.0,
@@ -575,15 +575,15 @@ Seaside Heights, New Jersey, where we lay our scene.
                                     },
                                 ),
                                 TextSection::new(
-                                    "Where ancient grudges were formed by the minute, and 
-feuds broke across the eight who lived there.".to_owned(),
+                                    "Where ancient grudges were formed by the minute, 
+and feuds broke across the eight who lived there.",
                                     TextStyle {
                                         font: asset_server.load("Jersey.ttf"),
                                         font_size: 20.0,
                                         color: Color::BLACK,
                                     },
                                 ),
-                            ]).with_alignment(TextAlignment::CENTER))
+                            ]).with_text_alignment(TextAlignment::Left))
                             .insert(Documents)
                             .insert(Fanfic)
                             .insert(FilePreview);
