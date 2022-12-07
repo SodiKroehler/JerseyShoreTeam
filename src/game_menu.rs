@@ -1,5 +1,5 @@
 use bevy::{app::AppExit, prelude::*};
-use bevy_inspector_egui::{bevy_egui::EguiContext, egui};
+// use bevy_inspector_egui::{bevy_egui::EguiContext, egui};
 
 const TEXT_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 
