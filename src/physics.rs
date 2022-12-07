@@ -388,7 +388,7 @@ fn switch_state(
 				_=>(),
 			}
 		}
-		if keyboard.just_pressed(KeyCode::N){
+		if keyboard.just_pressed(KeyCode::Escape){
 			commands.insert_resource(NextState(GameState::InGame));
 			pinball_spawner.spawned=false;
 			folder_open.opened=false;

@@ -266,7 +266,7 @@ fn handle_email_password( mut commands: Commands,
         tries.val +=1;
         if tries.val >3 {
             //change me to fail later
-            commands.insert_resource(NextState(GameState::Paused));
+            commands.insert_resource(NextState(GameState::Fail));
         }
     }
 
