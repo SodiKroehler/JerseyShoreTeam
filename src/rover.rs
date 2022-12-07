@@ -143,8 +143,8 @@ impl Plugin for RoverPlugin {
             .add_plugin(JsonAssetPlugin::<Weights>::new(&["wdict"]))
             .add_plugin(JsonAssetPlugin::<Q_Dict>::new(&["qdict"]))
             .insert_resource(AssetsLoading {items: Vec::new()})
-            .insert_resource(LastChat {name : "Rover:".to_string(),
-                                        val : "".to_string()});  
+            .insert_resource(LastChat {name : "Rover: ".to_string(),
+                                        val : "How are you?".to_string()});  
                                         
     }
 }
@@ -233,10 +233,15 @@ fn chat_update(
     c_parent: Query<Entity, (With<ChatParent>, With<Children>)>,
     mut sp: ResMut<LastChat>){
 
+
+        // info!("currstate: {:?}", format!("{rstate:?}") );
+
+
         if !(format!("{gstate:?}").contains("Rover")) {
             return; //just a fail safe, in case the exit system on 
             //listening triggers when leaving rover
         }
+
         let current_speaker = &sp.name;     
         let newmsg = commands.spawn_bundle(
             TextBundle::from_sections([
@@ -262,7 +267,9 @@ fn chat_update(
         let big_parent = c_parent.single();
         commands.entity(big_parent).push_children(&[newmsg]);
         
-        // info!("currstate: {:?}", format!("{rstate:?}") );
+        if (sp.name == "Rover: " && sp.val == "How are you?") {
+            sp.val = String::from(""); // to stop weird chat update
+        }
 
         if format!("{rstate:?}").contains("Thinking") {
                 //just came from listening, so outputting user msg
@@ -430,9 +437,9 @@ fn get_rover_response(
     let parsed = parser(q);
    // let stemmed = stemmer(parsed);
     let indexed = indexer(parsed, &handles, &w2i, &weights);
-    let answer = answerer(indexed, 100, asset_server, &handles, &q_dict, &deflect_dict);
+    let answer = answerer(indexed, stage.val +5, asset_server, &handles, &q_dict, &deflect_dict);
     msg.val = answer;
-    msg.name = "rover: ".to_owned();
+    msg.name = "Rover: ".to_owned();
     commands.insert_resource(NextState(RoverState::Talking));     
 }
 
@@ -576,7 +583,7 @@ fn answerer(idxs: Vec<f64>,
                 super::deflections::DeflectionType::StageTooLow, 
                 handles,deflect_dict);
         }
-        // info!("dist: {:?}", least_distance);
+        info!("stage: {:?}", stage);
         return closest_answer;
     }else {
         info!("resource loading issue");

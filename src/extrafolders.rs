@@ -6,6 +6,7 @@ use super::GameState;
 use super::CONSTANTS;
 use super::deflections::Password;
 // use super::DeflectionsPlugin;
+use super::Stage;
 
 const Z_OFFSET:f32 = CONSTANTS::Z_EXTRAFOLDER;
 
@@ -243,6 +244,7 @@ fn handle_email_password( mut commands: Commands,
     mut char_evr: EventReader<ReceivedCharacter>,
     keys: Res<Input<KeyCode>>,
     mut tries: ResMut<PasswordTries>,
+    mut stage: ResMut<Stage>,
     mut current_password: ResMut<Password>,
     p_text: Query<Entity, With<EmailText>>,
     mut text_query: Query<&mut Text>,){
@@ -261,7 +263,15 @@ fn handle_email_password( mut commands: Commands,
         // pass_text.sections[0].value = format!("");
         pass_text.sections[0].value.pop();
         if pass_text.sections[0].value == current_password.val {
-            commands.insert_resource(NextState(GameState::Ending));
+            if stage.val >= CONSTANTS::WINNING_STAGE {
+                commands.insert_resource(NextState(GameState::Ending));
+            } else {
+                info!("stage: {:?}", stage.val);
+                pass_text.sections[0].value = String::from("You are not welcome here yet. Go away.");
+            }
+        } else {
+            pass_text.sections[0].value = format!("WRONNGGGG!! {} tries left", 3-tries.val);
+
         }
         tries.val +=1;
         if tries.val >3 {
@@ -319,7 +329,11 @@ fn handle_email_button(mut commands: Commands,
     }
 }
 
-fn open_docs(mut commands: Commands, asset_server: Res<AssetServer>){
+fn open_docs(mut commands: Commands, 
+    mut stage: ResMut<Stage>,
+    asset_server: Res<AssetServer>){
+
+    stage.val += 1;
     //portal frame
     commands.spawn_bundle(SpriteBundle {
         texture: asset_server.load("window.png"),

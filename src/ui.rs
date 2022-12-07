@@ -151,8 +151,8 @@ fn roll_credits(
             if counter == transform.translation.x {
             // if counter == -4800.0 {
                 timer.pause();
-                exit.send(AppExit);
-                // commands.insert_resource(NextState(GameState::Paused));
+                // exit.send(AppExit);
+                commands.insert_resource(NextState(GameState::Paused));
             }
 		}
 	}
