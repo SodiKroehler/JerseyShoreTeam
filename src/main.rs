@@ -104,9 +104,9 @@ mod deflections;
 use deflections::DeflectionsPlugin;
 mod extrafolders;
 use extrafolders::ExtraFoldersPlugin;
-// pub mod game_menu;
-// mod start_menu;
-// use start_menu::MainMenuPlugin;
+mod game_menu;
+use game_menu::GameMenuPlugin;
+
 
 mod CONSTANTS;
 mod maphs;
@@ -123,9 +123,8 @@ fn main() {
         .add_loopless_state(GameState::InGame)
         .add_plugins(DefaultPlugins)
         .add_startup_system(setup)
-        // .add_state(GameState::MainMenu)
-        // .add_plugin(MainMenuPlugin)
-		// .add_plugin(game_menu::GameMenuPlugin)
+        .add_state(GameState::MainMenu)
+        .add_plugin(GameMenuPlugin)
         .add_plugin(RoverPlugin)
         .add_plugin(UiPlugin)
         .add_plugin(PhysicsPlugin)
