@@ -8,8 +8,7 @@ use collide_circle::Collision;
 mod collidenew;
 use collidenew::CollisionInfo;
 use collidenew::Shape;
-pub mod game_menu;
-use bevy_inspector_egui::bevy_egui::EguiPlugin;
+// use bevy_inspector_egui::bevy_egui::EguiPlugin;
 
 /*mod collidenewer;
 use collidenewer::ShapeNewer;
@@ -105,8 +104,9 @@ mod deflections;
 use deflections::DeflectionsPlugin;
 mod extrafolders;
 use extrafolders::ExtraFoldersPlugin;
-mod start_menu;
-use start_menu::MainMenuPlugin;
+// pub mod game_menu;
+// mod start_menu;
+// use start_menu::MainMenuPlugin;
 
 mod CONSTANTS;
 mod maphs;
@@ -123,10 +123,10 @@ fn main() {
         .add_loopless_state(GameState::InGame)
         .add_plugins(DefaultPlugins)
         .add_startup_system(setup)
-        .add_state(GameState::MainMenu)
+        // .add_state(GameState::MainMenu)
         //.add_plugin(MainMenuPlugin)
-		.add_plugin(game_menu::GameMenuPlugin)
-		.add_plugin(EguiPlugin)
+		// .add_plugin(game_menu::GameMenuPlugin)
+		// .add_plugin(EguiPlugin)
         .add_plugin(RoverPlugin)
         .add_plugin(UiPlugin)
         .add_plugin(PhysicsPlugin)
