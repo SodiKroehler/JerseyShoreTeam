@@ -95,6 +95,7 @@ enum GameState{
 	Paused,
 	Rover,
 	Ending,
+	Fail,
 }
 mod rover;
 use rover::RoverPlugin;
@@ -121,10 +122,9 @@ fn main() {
 			present_mode: PresentMode::Fifo,
 			..default()
 		})
-		.add_loopless_state(GameState::MainMenu)
+		.add_loopless_state(GameState::InGame)
 		.add_plugins(DefaultPlugins)
 		.add_startup_system(setup)
-		//.add_state(GameState::MainMenu)
 		.add_plugin(MainMenuPlugin)
 		.add_plugin(RoverPlugin)
 		.add_plugin(UiPlugin)

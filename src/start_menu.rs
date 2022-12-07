@@ -40,6 +40,19 @@ enum MenuButton {
     Quit,
 }
 
+
+impl Plugin for MainMenuPlugin {
+    fn build(&self, app: &mut App) {
+        // app.init_resource::<MenuMaterials>()
+        //     .add_system(button_system.run_in_state((GameState::MainMenu)))
+        //     .add_system(button_press_system.run_in_state((GameState::MainMenu)))
+        //     .add_enter_system(GameState::MainMenu,setup)
+        //     .add_exit_system(GameState::MainMenu,cleanup);
+            //.add_system_set(SystemSet::on_enter(GameState::MainMenu).with_system(setup))
+            //.add_system_set(SystemSet::on_exit(GameState::MainMenu).with_system(cleanup));
+    }
+}
+
 pub fn button_system(
     materials: Res<MenuMaterials>,
     mut buttons: Query<
@@ -75,17 +88,6 @@ fn button_press_system(
     }
 }
 
-impl Plugin for MainMenuPlugin {
-    fn build(&self, app: &mut App) {
-        app.init_resource::<MenuMaterials>()
-            .add_system(button_system.run_in_state((GameState::MainMenu)))
-            .add_system(button_press_system.run_in_state((GameState::MainMenu)))
-            .add_enter_system(GameState::MainMenu,setup)
-            .add_exit_system(GameState::MainMenu,cleanup);
-            //.add_system_set(SystemSet::on_enter(GameState::MainMenu).with_system(setup))
-            //.add_system_set(SystemSet::on_exit(GameState::MainMenu).with_system(cleanup));
-    }
-}
 
 fn root(materials: &Res<MenuMaterials>) -> NodeBundle {
     NodeBundle {

@@ -13,8 +13,8 @@ pub fn uicolor (c: Color) -> UiColor {
 
 //Numerical constants
 pub const H: usize = 300;
-pub const AMICABILITY: f64 = 100.0;
-pub const COS_DIST_THRESHOLD: f64 = 0.62;
+// pub const AMICABILITY: f64 = 100.0;
+pub const COS_DIST_THRESHOLD: f64 = 0.72;
 
 //z-offsets
 pub const Z_UI:f32 = 10.0;

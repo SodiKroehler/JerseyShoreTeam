@@ -15,6 +15,12 @@ pub struct Password{
     pub val: String,
 }
 
+
+#[derive(Default)]
+pub struct Amicability {
+    val: f64,
+}
+
 pub enum DeflectionType{
     NoMatch, //question not "understood"
     StageTooLow, //stage too low for answer
@@ -26,12 +32,14 @@ impl Plugin for DeflectionsPlugin {
     fn build(&self, app: &mut App) {
         app
             .insert_resource(Password {val : String::from("swiftfido3301")})
+            .insert_resource(Amicability {val : 0.0})
             .add_exit_system(RoverState::Listening, check_for_funny_values);                                        
     }
 }
 
 fn check_for_funny_values(mut commands: Commands,
                             mut msg: ResMut<LastChat>,
+                            mut amic: ResMut<Amicability>,
                             asset_server: Res<AssetServer>,
                             mut passw: ResMut<Password>){
 
@@ -39,7 +47,7 @@ fn check_for_funny_values(mut commands: Commands,
 
     //get parsed question
     let splits = super::rover::parser(question.clone()); 
-    info!("{}", question);
+
 
     let mut rng = rand::thread_rng();
 
@@ -49,6 +57,13 @@ fn check_for_funny_values(mut commands: Commands,
         super::ui::spawn_blue_screen_of_death(commands, asset_server);
         return;
     };
+
+
+// amicability nonsense
+
+    if question == String::from("here's a treat") {
+        amic.val += 100.0;
+    }
 
 //partial password matching
     let pwd_check_1: bool = splits[0].eq("is") && splits[1].eq("the") && splits[2].eq("password");
@@ -61,10 +76,13 @@ fn check_for_funny_values(mut commands: Commands,
     //check for "is the password _____"
     if pwd_check_1 || pwd_check_2 {
     
-        let mut starting_idx : isize = -1;        
+        let mut starting_idx : isize = -1;
+        info!("{:?}", pwd);
+        info!("{:?}", question);
+        let first_char = pwd.chars().nth(0).unwrap();   
       
         for (ix, ch) in passw.val.char_indices(){
-            if ch == pwd.chars().nth(0).unwrap(){
+            if ch == first_char{
                 starting_idx = ix as isize;
             }
         }
@@ -74,13 +92,14 @@ fn check_for_funny_values(mut commands: Commands,
             let mut mutated_pwd = String::from("");
             mutated_pwd = passw.val[starting_idx..(starting_idx + pwd.len())].to_string();
             if pwd.eq(&mutated_pwd){
-                let mut first_part = String::from("You're started on the right track!");
+                let mut found_part_pass = String::from("I have found the first part of the password successfully");
                 if starting_idx > (passw.val.len()/2) {                
-                    first_part = String::from("You're moving along the right track!");
+                    found_part_pass = String::from("I have found the second part of the password successfully");
                 }
+                msg.val = found_part_pass;
             }else {
                 let curr_possibility = rng.gen::<f64>();
-                if (curr_possibility * CONSTANTS::AMICABILITY) >= 1.0 {
+                if (curr_possibility * amic.val) >= 1.0 {
                     passw.val = pwd;
                     //hehe
                 }
@@ -113,7 +132,7 @@ pub fn generate_deflection(d:DeflectionType,
             }
         }
     }else {
-        info!("i have no idea what to do ");
-        return String::from("oh no, i shall now do the panic dance");
+        info!("the failsafe of the failsafe failed");
+        return String::from("I am stressed. I shall now do my panic dance");
     }
 }
