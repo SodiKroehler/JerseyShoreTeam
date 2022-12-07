@@ -583,7 +583,7 @@ fn answerer(idxs: Vec<f64>,
                 super::deflections::DeflectionType::StageTooLow, 
                 handles,deflect_dict);
         }
-        info!("stage: {:?}", stage);
+        // info!("stage: {:?}", stage);
         return closest_answer;
     }else {
         info!("resource loading issue");

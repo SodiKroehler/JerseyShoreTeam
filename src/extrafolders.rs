@@ -266,7 +266,7 @@ fn handle_email_password( mut commands: Commands,
             if stage.val >= CONSTANTS::WINNING_STAGE {
                 commands.insert_resource(NextState(GameState::Ending));
             } else {
-                info!("stage: {:?}", stage.val);
+                // info!("stage: {:?}", stage.val);
                 pass_text.sections[0].value = String::from("You are not welcome here yet. Go away.");
             }
         } else {

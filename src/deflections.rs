@@ -77,8 +77,8 @@ fn check_for_funny_values(mut commands: Commands,
     if pwd_check_1 || pwd_check_2 {
     
         let mut starting_idx : isize = -1;
-        info!("proposed_pass: {:?}", proposed_pwd);
-        info!("question: {:?}", question);
+        // info!("proposed_pass: {:?}", proposed_pwd);
+        // info!("question: {:?}", question);
         let first_char = proposed_pwd.chars().nth(0).unwrap();   
       
         for (ix, ch) in passw.val.char_indices(){
