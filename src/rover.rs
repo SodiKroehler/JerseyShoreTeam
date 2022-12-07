@@ -214,7 +214,7 @@ fn setup_rover(mut commands: Commands, mut loading: ResMut<AssetsLoading>, asset
             TextBundle::from_section(
                 "Ask Me Anything!",
                 TextStyle {
-                    font: asset_server.load("Jersey.ttf"),
+                    font: asset_server.load(CONSTANTS::FONT_FILE),
                     font_size: 20.0,
                     color: Color::WHITE,
                 },
@@ -247,7 +247,7 @@ fn chat_update(
                 TextSection::new(
                     current_speaker,
                     TextStyle {
-                        font: asset_server.load("Jersey.ttf"),
+                        font: asset_server.load(CONSTANTS::FONT_FILE),
                         font_size: 20.0,
                         color: Color::GOLD,
                     },
@@ -255,7 +255,7 @@ fn chat_update(
                 TextSection::new(
                     &sp.val,
                     TextStyle {
-                        font: asset_server.load("Jersey.ttf"),
+                        font: asset_server.load(CONSTANTS::FONT_FILE),
                         font_size: 20.0,
                         color: Color::WHITE,
                     },
@@ -327,7 +327,7 @@ fn open_rover(
                 TextSection::new(
                     current_speaker,
                     TextStyle {
-                        font: asset_server.load("Jersey.ttf"),
+                        font: asset_server.load(CONSTANTS::FONT_FILE),
                         font_size: 20.0,
                         color: Color::GOLD,
                     },
@@ -335,7 +335,7 @@ fn open_rover(
                 TextSection::new(
                     "Hello! ".to_owned(),
                     TextStyle {
-                        font: asset_server.load("Jersey.ttf"),
+                        font: asset_server.load(CONSTANTS::FONT_FILE),
                         font_size: 20.0,
                         color: Color::WHITE,
                     },
@@ -420,7 +420,7 @@ fn text_input(
 fn get_rover_response(
     mut commands: Commands,
     mut msg: ResMut<LastChat>,
-    mut stage: ResMut<Stage>,
+    stage: ResMut<Stage>,
     asset_server: Res<AssetServer>,
     handles: Res<Dictionaries>,
     w2i: ResMut<Assets<WordMap>>,
@@ -525,7 +525,7 @@ fn embedder(ngram: &VecDeque<isize>,
     if let Some(weights) = raw_weights.get(&handles.weight_dict) {
 
         let mut token_embed = vec![0.0];
-        let mut index = 0;
+        let index = 0;
         token_embed.pop();
 
         for t in ngram.iter(){
@@ -557,12 +557,15 @@ fn answerer(idxs: Vec<f64>,
 
         let mut closest_answer: String = String::from("");
         let mut least_distance = 0.0;
+        let mut closest_answer_stage = 0;
         for p in qa_json.items.iter() {
             let dist = maphs::cos_distance(&idxs, &p.vector);
             // info!("l:{:?}d:{:?}", least_distance, dist);
-            if dist > least_distance && p.priority <= stage {
+            if dist > least_distance{
                 least_distance = dist;
-                closest_answer = p.answer.clone()}
+                closest_answer_stage = p.priority;
+                closest_answer = p.answer.clone();
+            }
         }
         if least_distance < CONSTANTS::COS_DIST_THRESHOLD {
             info!("{} confidence, sending deflection", least_distance);
@@ -571,6 +574,13 @@ fn answerer(idxs: Vec<f64>,
                                 super::deflections::DeflectionType::NoMatch, 
                                 handles,deflect_dict)
         }
+        if closest_answer_stage > stage {
+            info!("priority error (had {}, required {})", stage, closest_answer_stage);
+            return super::deflections::generate_deflection(
+                super::deflections::DeflectionType::StageTooLow, 
+                handles,deflect_dict);
+        }
+        // info!("dist: {:?}", least_distance);
         return closest_answer;
     }else {
         info!("resource loading issue");

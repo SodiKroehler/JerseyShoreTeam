@@ -7,7 +7,7 @@ use super::CONSTANTS;
 use super::deflections::Password;
 // use super::DeflectionsPlugin;
 
-const z_offset:f32 = CONSTANTS::Z_EXTRAFOLDER;
+const Z_OFFSET:f32 = CONSTANTS::Z_EXTRAFOLDER;
 
 pub struct ExtraFoldersPlugin;
 
@@ -24,11 +24,12 @@ struct Email;
 struct CloseButton;
 
 #[derive(Component)]
-enum FileButton {
-    Audio,
-    Text,
-    Picture,
-}
+struct FileButton;
+// {
+//     Audio,
+//     Text,
+//     Picture,
+// }
 
 #[derive(Component)]
 struct Fanfic;
@@ -44,6 +45,12 @@ struct Documents;
 struct FilePreview;
 
 
+#[derive(Default)]
+pub struct PasswordTries {
+    val: usize,
+}
+
+
 impl Plugin for ExtraFoldersPlugin {
     fn build(&self, app: &mut App) {
        app
@@ -52,6 +59,7 @@ impl Plugin for ExtraFoldersPlugin {
            .add_exit_system(GameState::Email, close_email) 
            .add_enter_system(GameState::Folder, open_docs) 
            .add_exit_system(GameState::Folder, close_docs) 
+           .insert_resource(PasswordTries {val : 0})
            .add_system(handle_email_password.run_in_state(GameState::Email))                                     
            .add_system(handle_close_button.run_in_state(GameState::Folder))                                      
            .add_system(handle_close_button.run_in_state(GameState::Email))                                      
@@ -94,13 +102,13 @@ fn open_email(mut commands: Commands,
         commands
         .spawn_bundle(SpriteBundle {
             texture: asset_server.load("dialog.png"),
-            transform: Transform::from_xyz(0.0, 0.0, z_offset),
+            transform: Transform::from_xyz(0.0, 0.0, Z_OFFSET),
             ..default()
         }).insert(Email);
         
         //close button
         commands.spawn_bundle(ButtonBundle {
-            transform: Transform::from_xyz(0.,0., z_offset + 3.0),
+            transform: Transform::from_xyz(0.,0., Z_OFFSET + 3.0),
             style: Style {
                 size: Size::new(Val::Px(40.0), Val::Px(40.0)),
                 position_type: PositionType::Absolute,
@@ -118,7 +126,7 @@ fn open_email(mut commands: Commands,
 
         //submit button
         commands.spawn_bundle(ButtonBundle {
-            transform: Transform::from_xyz(0.,0., z_offset + 3.0),
+            transform: Transform::from_xyz(0.,0., Z_OFFSET + 3.0),
             style: Style {
                 size: Size::new(Val::Px(100.0), Val::Px(35.0)),
                 margin: UiRect::all(Val::Auto),
@@ -138,7 +146,7 @@ fn open_email(mut commands: Commands,
             parent.spawn_bundle(TextBundle::from_section(
                 "Enter",
                 TextStyle {
-                    font: asset_server.load("Jersey.ttf"),
+                    font: asset_server.load(CONSTANTS::FONT_FILE),
                     font_size: 20.0,
                     color: CONSTANTS::BACKGROUND,
                 },
@@ -147,7 +155,7 @@ fn open_email(mut commands: Commands,
 
         // portal title
          commands.spawn_bundle(NodeBundle{
-            transform: Transform::from_xyz(0.,0., z_offset + 2.0),
+            transform: Transform::from_xyz(0.,0., Z_OFFSET + 2.0),
             style: Style {
                 position_type: PositionType::Absolute,
                 position: UiRect {
@@ -163,7 +171,7 @@ fn open_email(mut commands: Commands,
             parent.spawn_bundle(TextBundle::from_section(
                 "Jersey Shore Super Email",
                 TextStyle {
-                    font: asset_server.load("Jersey.ttf"),
+                    font: asset_server.load(CONSTANTS::FONT_FILE),
                     font_size: 20.0,
                     color: CONSTANTS::BACKGROUND,
                 },
@@ -172,7 +180,7 @@ fn open_email(mut commands: Commands,
 
         //prompt text
         commands.spawn_bundle(NodeBundle{
-            transform: Transform::from_xyz(0.,0., z_offset + 2.0),
+            transform: Transform::from_xyz(0.,0., Z_OFFSET + 2.0),
             style: Style {
                 position_type: PositionType::Absolute,
                 position: UiRect {
@@ -187,9 +195,9 @@ fn open_email(mut commands: Commands,
         }).with_children(|parent| {
                 parent.spawn_bundle(TextBundle::from_section(
                     // "C::/UsersBratwurstIII/Documents",
-                    String::from(r"Please enter your password\:"),
+                    String::from(r"Please enter your password:"),
                     TextStyle {
-                        font: asset_server.load("Jersey.ttf"),
+                        font: asset_server.load(CONSTANTS::FONT_FILE),
                         font_size: 20.0,
                         color: Color::BLACK,
                     },
@@ -198,7 +206,7 @@ fn open_email(mut commands: Commands,
 
         //actual text entry
         commands.spawn_bundle(NodeBundle{
-            transform: Transform::from_xyz(0.,0., z_offset + 1.0),
+            transform: Transform::from_xyz(0.,0., Z_OFFSET + 1.0),
             style: Style {
                 position_type: PositionType::Absolute,
                 position: UiRect {
@@ -214,7 +222,7 @@ fn open_email(mut commands: Commands,
                 parent.spawn_bundle(TextBundle::from_section(
                     "",
                     TextStyle {
-                        font: asset_server.load("Jersey.ttf"),
+                        font: asset_server.load(CONSTANTS::FONT_FILE),
                         font_size: 20.0,
                         color: Color::BLACK,
                     },
@@ -234,6 +242,7 @@ fn close_email(mut commands: Commands,
 fn handle_email_password( mut commands: Commands, 
     mut char_evr: EventReader<ReceivedCharacter>,
     keys: Res<Input<KeyCode>>,
+    mut tries: ResMut<PasswordTries>,
     mut current_password: ResMut<Password>,
     p_text: Query<Entity, With<EmailText>>,
     mut text_query: Query<&mut Text>,){
@@ -253,6 +262,11 @@ fn handle_email_password( mut commands: Commands,
         pass_text.sections[0].value.pop();
         if pass_text.sections[0].value == current_password.val {
             commands.insert_resource(NextState(GameState::Ending));
+        }
+        tries.val +=1;
+        if tries.val >3 {
+            //change me to fail later
+            commands.insert_resource(NextState(GameState::Paused));
         }
     }
 
@@ -309,7 +323,7 @@ fn open_docs(mut commands: Commands, asset_server: Res<AssetServer>){
     //portal frame
     commands.spawn_bundle(SpriteBundle {
         texture: asset_server.load("window.png"),
-        transform: Transform::from_xyz(0.0, 4.0, z_offset+1.0),
+        transform: Transform::from_xyz(0.0, 4.0, Z_OFFSET+1.0),
         sprite: Sprite{
             custom_size: Some(Vec2::new(900.0 - 50.0, 718.0-50.0)),
             ..default()
@@ -319,7 +333,7 @@ fn open_docs(mut commands: Commands, asset_server: Res<AssetServer>){
 
       //close button
     commands.spawn_bundle(ButtonBundle {
-        transform: Transform::from_xyz(0.,0., z_offset + 3.0),
+        transform: Transform::from_xyz(0.,0., Z_OFFSET + 3.0),
         style: Style {
             size: Size::new(Val::Px(40.0), Val::Px(40.0)),
             position_type: PositionType::Absolute,
@@ -337,7 +351,7 @@ fn open_docs(mut commands: Commands, asset_server: Res<AssetServer>){
 
     // portal title
     commands.spawn_bundle(NodeBundle{
-        transform: Transform::from_xyz(0.,0., z_offset + 2.0),
+        transform: Transform::from_xyz(0.,0., Z_OFFSET + 2.0),
         style: Style {
             position_type: PositionType::Absolute,
             position: UiRect {
@@ -353,7 +367,7 @@ fn open_docs(mut commands: Commands, asset_server: Res<AssetServer>){
         parent.spawn_bundle(TextBundle::from_section(
             "My Documents",
             TextStyle {
-                font: asset_server.load("Jersey.ttf"),
+                font: asset_server.load(CONSTANTS::FONT_FILE),
                 font_size: 20.0,
                 color: Color::BLACK,
                 // color: CONSTANTS::BACKGROUND,
@@ -363,7 +377,7 @@ fn open_docs(mut commands: Commands, asset_server: Res<AssetServer>){
 
     //address bar
     commands.spawn_bundle(NodeBundle{
-        transform: Transform::from_xyz(0.,0., z_offset + 2.0),
+        transform: Transform::from_xyz(0.,0., Z_OFFSET + 2.0),
         style: Style {
             position_type: PositionType::Absolute,
             position: UiRect {
@@ -379,7 +393,7 @@ fn open_docs(mut commands: Commands, asset_server: Res<AssetServer>){
         parent.spawn_bundle(TextBundle::from_section(
             r"C:\\Users\\Bratwurst III\\My Documents",
             TextStyle {
-                font: asset_server.load("Jersey.ttf"),
+                font: asset_server.load(CONSTANTS::FONT_FILE),
                 font_size: 20.0,
                 color: Color::BLACK,
             },
@@ -388,7 +402,7 @@ fn open_docs(mut commands: Commands, asset_server: Res<AssetServer>){
 
      //fanfic button
      commands.spawn_bundle(ButtonBundle {
-        transform: Transform::from_xyz(0.,0.,  z_offset+5.0),
+        transform: Transform::from_xyz(0.,0.,  Z_OFFSET+5.0),
         style: Style {
             size: Size::new(Val::Px(40.0), Val::Px(40.0)),
             position_type: PositionType::Absolute,
@@ -405,7 +419,7 @@ fn open_docs(mut commands: Commands, asset_server: Res<AssetServer>){
 
     //fanfic button description
     commands.spawn_bundle(ButtonBundle {
-        transform: Transform::from_xyz(0.,0.,  z_offset+5.0),
+        transform: Transform::from_xyz(0.,0.,  Z_OFFSET+5.0),
         style: Style {
             size: Size::new(Val::Px(40.0), Val::Px(40.0)),
             position_type: PositionType::Absolute,
@@ -422,7 +436,7 @@ fn open_docs(mut commands: Commands, asset_server: Res<AssetServer>){
         parent.spawn_bundle(TextBundle::from_section(
             "my_super_secret_document.txt",
             TextStyle {
-                font: asset_server.load("Jersey.ttf"),
+                font: asset_server.load(CONSTANTS::FONT_FILE),
                 font_size: 20.0,
                 color: Color::BLACK,
             },
@@ -448,7 +462,7 @@ fn open_docs(mut commands: Commands, asset_server: Res<AssetServer>){
 
     //open fido button
     commands.spawn_bundle(ButtonBundle {
-        transform: Transform::from_xyz(0.,0.,  z_offset+5.0),
+        transform: Transform::from_xyz(0.,0.,  Z_OFFSET+5.0),
         style: Style {
             size: Size::new(Val::Px(40.0), Val::Px(40.0)),
             position_type: PositionType::Absolute,
@@ -465,7 +479,7 @@ fn open_docs(mut commands: Commands, asset_server: Res<AssetServer>){
 
     //fido button description
     commands.spawn_bundle(ButtonBundle {
-        transform: Transform::from_xyz(0.,0.,  z_offset+5.0),
+        transform: Transform::from_xyz(0.,0.,  Z_OFFSET+5.0),
         style: Style {
             size: Size::new(Val::Px(40.0), Val::Px(40.0)),
             position_type: PositionType::Absolute,
@@ -482,7 +496,7 @@ fn open_docs(mut commands: Commands, asset_server: Res<AssetServer>){
         parent.spawn_bundle(TextBundle::from_section(
             "babyfido.png",
             TextStyle {
-                font: asset_server.load("Jersey.ttf"),
+                font: asset_server.load(CONSTANTS::FONT_FILE),
                 font_size: 20.0,
                 color: Color::BLACK,
             },
@@ -509,7 +523,7 @@ fn open_photo(mut commands: Commands,
             // info!("{:?}", ent.get_type_info());
             commands.spawn_bundle(SpriteBundle {
                     texture: asset_server.load("fidoTheDog.png"),
-                    transform: Transform::from_xyz(200.0, -50.0, z_offset+5.0),
+                    transform: Transform::from_xyz(200.0, -50.0, Z_OFFSET+5.0),
                     sprite: Sprite{
                         custom_size: Some(Vec2::new(350.0,350.0)),
                         ..default()
@@ -544,8 +558,8 @@ fn open_fanfic(mut commands: Commands,
             Interaction::Clicked => {
                 commands.spawn_bundle(
                     NodeBundle{ 
-                        transform: Transform::from_xyz(0.0, 0.0, z_offset+5.0),
-                        color: CONSTANTS::uicolor(CONSTANTS::CLOSE_RED),
+                        transform: Transform::from_xyz(0.0, 0.0, Z_OFFSET+5.0),
+                        color: CONSTANTS::uicolor(CONSTANTS::BACKGROUND),
                         style: Style {
                             // size: Size::new(Val::Px(100.0), Val::Px(200.0)),
                             position_type: PositionType::Absolute,
@@ -565,25 +579,26 @@ fn open_fanfic(mut commands: Commands,
                         parent.spawn_bundle(
                             TextBundle::from_sections([
                                 TextSection::new(
-                                    "A single household, without much dignity, in fair 
-Seaside Heights, New Jersey, where we lay our scene.
-",
+                                    "A single household, without much dignity, 
+in fair Seaside Heights, New Jersey, 
+where we lay our scene.",
                                     TextStyle {
-                                        font: asset_server.load("Jersey.ttf"),
+                                        font: asset_server.load(CONSTANTS::FONT_FILE),
                                         font_size: 20.0,
                                         color: Color::BLACK,
                                     },
                                 ),
                                 TextSection::new(
-                                    "Where ancient grudges were formed by the minute, and 
-feuds broke across the eight who lived there.".to_owned(),
+                                    "
+ Where ancient grudges were formed by the minute, 
+and feuds broke across the eight who lived there.",
                                     TextStyle {
-                                        font: asset_server.load("Jersey.ttf"),
+                                        font: asset_server.load(CONSTANTS::FONT_FILE),
                                         font_size: 20.0,
                                         color: Color::BLACK,
                                     },
                                 ),
-                            ]).with_alignment(TextAlignment::CENTER))
+                            ]).with_text_alignment(TextAlignment::TOP_LEFT))
                             .insert(Documents)
                             .insert(Fanfic)
                             .insert(FilePreview);

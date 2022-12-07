@@ -1,6 +1,6 @@
 // use std::path::absolute;
 
-use bevy::{prelude::*};
+use bevy::{prelude::*, app::AppExit};
 use bevy::time::Stopwatch;
 use super::GameState;
 use iyes_loopless::prelude::*;
@@ -53,7 +53,7 @@ fn spawn_xp_ui_elems(mut commands: Commands, asset_server: Res<AssetServer>){
     
     commands.spawn_bundle(SpriteBundle {
         texture: asset_server.load("taskbar.png"),
-        transform: Transform::from_xyz(0.0, -346.0, 1.),
+        transform: Transform::from_xyz(0.0, -346.0, CONSTANTS::Z_PAUSE),
         ..default()
     });
     
@@ -77,7 +77,7 @@ fn spawn_xp_ui_elems(mut commands: Commands, asset_server: Res<AssetServer>){
             parent.spawn_bundle(TextBundle::from_section(
                 "Start",
                 TextStyle {
-                    font: asset_server.load("Jersey.ttf"),
+                    font: asset_server.load(CONSTANTS::FONT_FILE),
                     font_size: 20.0,
                     color: Color::WHITE,
                 },
@@ -105,7 +105,7 @@ fn spawn_xp_ui_elems(mut commands: Commands, asset_server: Res<AssetServer>){
                 parent.spawn_bundle(TextBundle::from_section(
                     "0.00",
                     TextStyle {
-                        font: asset_server.load("Jersey.ttf"),
+                        font: asset_server.load(CONSTANTS::FONT_FILE),
                         font_size: 20.0,
                         color: Color::WHITE,
                     },
@@ -121,12 +121,9 @@ fn process_triggers(mut commands: Commands, kbd: Res<Input<KeyCode>>) {
     if kbd.just_pressed(KeyCode::T) {
         commands.insert_resource(NextState(GameState::Rover));
     }
-    if kbd.just_pressed(KeyCode::B) {
-        commands.insert_resource(NextState(GameState::Folder));
-    }
-    if kbd.just_pressed(KeyCode::C) {
-        commands.insert_resource(NextState(GameState::Ending));
-    }
+    // if kbd.just_pressed(KeyCode::C) {
+    //     commands.insert_resource(NextState(GameState::Ending));
+    // }
 }
 
 fn setup_credits(mut commands: Commands,
@@ -143,18 +140,19 @@ fn setup_credits(mut commands: Commands,
 fn roll_credits(
 	time: Res<Time>,
     mut commands: Commands,
-	mut popup: Query<(&mut CreditTimer, &mut Transform)>) {
+	mut popup: Query<(&mut CreditTimer, &mut Transform)>,
+    mut exit: EventWriter<AppExit>) {
 
     let counter = -4800.0;
 	for (mut timer, mut transform) in popup.iter_mut() {
 		timer.tick(time.delta());
 		if timer.just_finished() {
 			transform.translation.x -= 1280.;
-            // if counter == transform.translation.x {
-            if counter == -4800.0 {
+            if counter == transform.translation.x {
+            // if counter == -4800.0 {
                 timer.pause();
-                //exit.send(AppExit);
-                commands.insert_resource(NextState(GameState::Paused));
+                exit.send(AppExit);
+                // commands.insert_resource(NextState(GameState::Paused));
             }
 		}
 	}
@@ -200,7 +198,7 @@ fn enter_paused(mut commands: Commands,
             parent.spawn_bundle(TextBundle::from_section(
                 "Play!",
                 TextStyle {
-                    font: asset_server.load("Jersey.ttf"),
+                    font: asset_server.load(CONSTANTS::FONT_FILE),
                     font_size: 40.0,
                     color: Color::WHITE,
                 },
@@ -280,7 +278,7 @@ pub fn spawn_blue_screen_of_death(mut commands: Commands,
 
 fn tick_tock(
 	time: Res<Time>,
-    mut commands: Commands,
+    commands: Commands,
     mut q_clocktime: Query<&mut GameDuration>,
     clocktext: Query<(Entity, &Children), With<Clock>>,
     mut text_query: Query<&mut Text>,) {

@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+// use bevy::math::Vec3;
 
 pub fn cos_distance(a: &Vec<f64>, b: &Vec<f64>) -> f64{
     // dot-product(u, v) / sqrt(dot-product(u, u))*sqrt(dot-product(v,v))

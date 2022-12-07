@@ -1,103 +1,99 @@
 {
-    "questionAnswerPair":[
-    
+    "items": [
        {
             "id": 1,
-            "question": "who are you",
+            "question": "Who are you?",
             "answer": "I am Rover, loyal companion and longtime resident of this computer!",
             "vector": [0, 0, 0],
             "priority": 1
        },
-	   
-	   {
-            "id": 2,
-            "question": "what is your name",
-            "answer": "I am Rover, loyal companion and longtime resident of this computer!",
-            "vector": [0, 0, 0],
-            "priority": 2
-       },
-
        {
-            "id": 3,
-            "question": "where is this",
+            "id": 2,
+            "question": "Where am I?",
             "answer": "You're in a computer, of course.",
             "vector": [0, 0, 0],
             "priority": 1
        },
        {
-            "id": 4,
-            "question": "how to get out",
+            "id": 3,
+            "question": "How do I get out of here?",
             "answer": "Hmm...the last person to get stuck here mailed themselves out...",
             "vector": [0, 0, 0],
             "priority": 1
         },
         {
-            "id": 5,
-            "question": "can you help me",
+            "id": 4,
+            "question": "Help?",
             "answer": "Have you checked out the folders on this computer? My user spends a lot of time in music and photos.",
+            "vector": [0, 0, 0],
+            "priority": 1
+        },
+        {
+            "id": 5,
+            "question": "Help?",
+            "answer": "Have you checked out the folders on this computer? Sometimes you can even find cool games!",
             "vector": [0, 0, 0],
             "priority": 2
         },
         {
             "id": 6,
-            "question": "help me",
-            "answer":  "Have you checked out the folders on this computer? My user plays some game in the games folder all the time...I forget the name...Why don't you check it out?",
+            "question": "Help?",
+            "answer": "If you've checked out all the files on this computer, try clicking the email icon.",
             "vector": [0, 0, 0],
-            "priority": 1
+            "priority": 3
         },
-    
         {
             "id": 7,
-            "question": "how do I reach the files",
-            "answer": "Well, I jump, but I'm a dog. Maybe you could get some practice playing the games on this computer.",
+            "question": "How do I reach the files?",
+            "answer": "Well, I jump, but I'm a dog. So I guess that's up to you.",
             "vector": [0, 0, 0],
             "priority": 1
         },
         {
             "id": 8,
-            "question": "why is the music folder important",
-            "answer": "There's this one artist my user's been listening to a lot lately...I can't remember their name...",
+            "question": "How do I open a folder",
+            "answer": "Pressing M while on top of the folder should do the trick.",
             "vector": [0, 0, 0],
-            "priority": 2
+            "priority": 1
         },
         {
             "id": 9,
-            "question": "why is the picture folder important",
+            "question": "Why is there a picture of a dog?",
             "answer": "If only my user loved me as much as my user loves their real dog...",
             "vector": [0, 0, 0],
             "priority": 2
         },
         {
             "id": 10,
-            "question": "why is the writing folder important",
-            "answer": "My user's been spending a lot of time trying to solve puzzles lately. Spotted lanternfly? Ant? Ladybug? Oh, woof it! I can't remember the name. There's some number at the end too...",
+            "question": "What is the password to email?",
+            "answer": "\"Three parts with a swift start.\" But then... uh, Ant, maybe? Oh, woof it! There's some number at the end too...",
             "vector": [0, 0, 0],
             "priority": 2
         },
         {
             "id": 11,
-            "question": "why am i locked out of email",
-            "answer": "Have you been guessing random passwords?! I'll give you a hint: it's not abc123. Why don't you spend time collecting information about my user?",
+            "question": "Why am I locked out of email?",
+            "answer": "Have you been guessing random passwords?! Be careful - you only get three tries!",
             "vector": [0, 0, 0],
             "priority": 1
         },
         {
             "id": 12,
-            "question": "Is swift the password?",
-            "answer": "You're on the right track! Enter your guess into the email login (but be careful you only have 3 tries before a lockout), or keep exploring.",
+            "question": "What is the little timer",
+            "answer": "I don't know but I'm pretty sure it just tells the time.",
             "vector": [0, 0, 0],
-            "priority": 2
+            "priority": 1
         },
         {
             "id": 13,
-            "question": "Is fido the password?",
-            "answer": "You're on the right track! Enter your guess into the email login (but be careful you only have 3 tries before a lockout), or keep exploring.",
+            "question": "What is the number at the end of the password?",
+            "answer": "Well I know, but I can't tell. It has to do with the story of cicada",
             "vector": [0, 0, 0],
             "priority": 2
         },
         {
             "id": 14,
-            "question": "Is 3301 the password?",
+            "question": "",
             "answer": "You're on the right track! Enter your guess into the email login (but be careful you only have 3 tries before a lockout), or keep exploring.",
             "vector": [0, 0, 0],
             "priority": 1
@@ -108,31 +104,31 @@
             "answer": "Hello, stranger.",
             "vector": [0, 0, 0],
             "priority": 1
-       },
-       {
-        "id": 16,
-        "question": "how are you",
-        "answer": "I'm doing good! Ask me some questions!",
-        "vector": [0, 0, 0],
-        "priority": 1
+        },
+        {
+            "id": 16,
+            "question": "How are you?",
+            "answer": "I'm doing good! Thanks for asking!",
+            "vector": [0, 0, 0],
+            "priority": 1
         },
         {
             "id": 17,
-            "question": "love to eat",
-            "answer": "I'm a dog, so I love carrot! Of course!",
+            "question": "What do you like to eat?",
+            "answer": "I'm a dog, so I love carrots! Of course!",
             "vector": [0, 0, 0],
             "priority": 1
-       },
-       {
-        "id": 18,
-        "question": "love to drink",
-        "answer": "Computer should not have any liquid inside!",
-        "vector": [0, 0, 0],
-        "priority": 1
+        },
+        {
+            "id": 18,
+            "question": "you like to drink?",
+            "answer": "Well I am in a computer, which shouldn't have any liquids in it!",
+            "vector": [0, 0, 0],
+            "priority": 1
         },
         {
             "id": 19,
-            "question": "your favorite food",
+            "question": "your favorite food?",
             "answer": "I'm a dog, so I love carrot! Of course!",
             "vector": [0, 0, 0],
             "priority": 1
@@ -150,6 +146,6 @@
             "answer": "I am Rover, loyal companion and longtime resident of this computer!",
             "vector": [0, 0, 0],
             "priority": 2
-       }
+        }
     ]
- }
+}
