@@ -68,18 +68,18 @@ fn check_for_funny_values(mut commands: Commands,
 //partial password matching
     let pwd_check_1: bool = splits[0].eq("is") && splits[1].eq("the") && splits[2].eq("password");
     let pwd_check_2: bool = splits[0].eq("is") && splits[splits.len()-2].eq("the") && splits[splits.len()-1].eq("password");
-    let mut pwd = String::from("");
+    let mut proposed_pwd = String::from("");
 
-    if pwd_check_1 {pwd = question[18..question.len()].to_string();}
-    if pwd_check_2 {pwd = format!("{:?}", question[1..(question.len()-12)].to_string());}
+    if pwd_check_1 {proposed_pwd = question[16..question.len()].to_string();}
+    else if pwd_check_2 {proposed_pwd = question[1..(question.len()-12)].to_string();}
 
     //check for "is the password _____"
     if pwd_check_1 || pwd_check_2 {
     
         let mut starting_idx : isize = -1;
-        info!("{:?}", pwd);
-        info!("{:?}", question);
-        let first_char = pwd.chars().nth(0).unwrap();   
+        info!("proposed_pass: {:?}", proposed_pwd);
+        info!("question: {:?}", question);
+        let first_char = proposed_pwd.chars().nth(0).unwrap();   
       
         for (ix, ch) in passw.val.char_indices(){
             if ch == first_char{
@@ -90,17 +90,17 @@ fn check_for_funny_values(mut commands: Commands,
         if starting_idx >= 0 {
             let starting_idx : usize = starting_idx as usize;
             let mut mutated_pwd = String::from("");
-            mutated_pwd = passw.val[starting_idx..(starting_idx + pwd.len())].to_string();
-            if pwd.eq(&mutated_pwd){
+            mutated_pwd = passw.val[starting_idx..(starting_idx + proposed_pwd.len())].to_string();
+            if proposed_pwd.eq(&mutated_pwd){
                 let mut found_part_pass = String::from("I have found the first part of the password successfully");
                 if starting_idx > (passw.val.len()/2) {                
                     found_part_pass = String::from("I have found the second part of the password successfully");
                 }
-                msg.val = found_part_pass;
+                msg.val = found_part_pass; // triggers pre-defined responses 
             }else {
                 let curr_possibility = rng.gen::<f64>();
                 if (curr_possibility * amic.val) >= 1.0 {
-                    passw.val = pwd;
+                    passw.val = proposed_pwd;
                     //hehe
                 }
                 return;

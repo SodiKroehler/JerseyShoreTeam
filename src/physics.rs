@@ -144,7 +144,7 @@ fn despawn(
 			}
 		}
 		stage_change.val+=1;
-		//info!("advance story:{}", stage_change.val);	//replace with whatever int increment thing sodi wants
+		info!("advance story:{}", stage_change.val);	//replace with whatever int increment thing sodi wants
 		if !folder_open.opened{
 			commands.insert_resource(NextState(GameState::InGame));
 		}
