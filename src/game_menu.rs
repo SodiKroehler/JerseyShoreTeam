@@ -1,5 +1,5 @@
 use bevy::{app::AppExit, prelude::*};
-// use bevy_inspector_egui::{bevy_egui::EguiContext, egui};
+use bevy_inspector_egui::{bevy_egui::EguiContext, egui};
 
 const TEXT_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 
@@ -158,38 +158,40 @@ fn main_menu_setup(mut command: Commands, asset_server: Res<AssetServer>) {
 }
 
 fn user_login(
-    mut user_data: ResMut<UserData>,
-    mut egui_ctx: ResMut<EguiContext>,
+    // mut user_data: ResMut<UserData>,
+    // mut egui_ctx: ResMut<EguiContext>,
     mut state: ResMut<State<GameState>>,
     mut menu: ResMut<State<MenuState>>,
 ) {
-    egui::Window::new("My Window")
-        .default_size(egui::Vec2::new(300., 200.))
-        .resizable(false)
-        .title_bar(false)
-        .show(egui_ctx.ctx_mut(), |ui| {
-            ui.heading("User Login");
-            ui.horizontal(|ui| {
-                ui.label("username:");
-                ui.text_edit_singleline(&mut user_data.username);
-            });
-            ui.horizontal(|ui| {
-                ui.label("password:");
-                ui.text_edit_singleline(&mut user_data.password);
-            });
-            ui.horizontal(|ui| {
-                if ui.button("Login").clicked() {
-                    println!(
-                        "username: {}, password: {}",
-                        user_data.username, user_data.password
-                    );
-                    if &user_data.username == USERNAME && &user_data.password == PASSWORD {
-                        menu.set(MenuState::Disabled).unwrap();
-                        state.set(GameState::InGame).unwrap();
-                    }
-                }
-            });
-        });
+    menu.set(MenuState::Disabled).unwrap();
+    state.set(GameState::InGame).unwrap();
+    // egui::Window::new("My Window")
+    //     .default_size(egui::Vec2::new(300., 200.))
+    //     .resizable(false)
+    //     .title_bar(false)
+    //     .show(egui_ctx.ctx_mut(), |ui| {
+    //         ui.heading("User Login");
+    //         ui.horizontal(|ui| {
+    //             ui.label("username:");
+    //             ui.text_edit_singleline(&mut user_data.username);
+    //         });
+    //         ui.horizontal(|ui| {
+    //             ui.label("password:");
+    //             ui.text_edit_singleline(&mut user_data.password);
+    //         });
+    //         ui.horizontal(|ui| {
+    //             if ui.button("Login").clicked() {
+    //                 println!(
+    //                     "username: {}, password: {}",
+    //                     user_data.username, user_data.password
+    //                 );
+    //                 if &user_data.username == USERNAME && &user_data.password == PASSWORD {
+    //                     menu.set(MenuState::Disabled).unwrap();
+    //                     state.set(GameState::InGame).unwrap();
+    //                 }
+    //             }
+    //         });
+    //     });
 }
 
 fn menu_action(
