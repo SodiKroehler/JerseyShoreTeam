@@ -1,15 +1,11 @@
-// extern crate rust_stemmers;
 use std::collections::{HashMap, VecDeque};
 use std::fs;
 use std::fs::{OpenOptions};
-use std::io::{prelude::*, Write, BufReader};
-// use rust_stemmers::{Algorithm, Stemmer};
+use std::io::{prelude::*, Write};
 use serde::{Deserialize, Serialize};
 use bevy::prelude::*;
 use iyes_loopless::prelude::*;
 use bevy_common_assets::json::JsonAssetPlugin;
-// use stop_words;
-
 
 use crate::CONSTANTS;
 use super::GameState;

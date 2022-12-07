@@ -53,7 +53,7 @@ fn spawn_xp_ui_elems(mut commands: Commands, asset_server: Res<AssetServer>){
     
     commands.spawn_bundle(SpriteBundle {
         texture: asset_server.load("taskbar.png"),
-        transform: Transform::from_xyz(0.0, -346.0, CONSTANTS::Z_PAUSE),
+        transform: Transform::from_xyz(0.0, -346.0, 1.0),
         ..default()
     });
     
